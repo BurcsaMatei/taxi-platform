@@ -1,0 +1,57 @@
+root/
+│
+├── components/
+│   ├── Header.tsx               # Header global + iconițe + telefon pe mobil
+│   ├── Footer.tsx               # Footer global (în viitor adăugări stil)
+│   ├── Layout.tsx               # SEO global + structura pagină
+│   ├── Separator.tsx            # Linie separatoare reutilizabilă
+│   ├── Button.tsx                # Buton global reutilizabil
+│   │
+│   ├── CardGrid.tsx              # Grid de carduri (folosit la galerie)
+│   │
+│   ├── sections/
+│   │   ├── homepage/
+│   │   │   ├── HeroSectionHomepage.tsx
+│   │   │   ├── IntroSectionHomepage.tsx
+│   │   │   └── ShortTextHomepage.tsx
+│   │   │
+│   │   ├── gallery/
+│   │   │   ├── HeroSectionGallery.tsx
+│   │   │   ├── IntroSectionGallery.tsx
+│   │   │   └── ShortTextGallery.tsx
+│   │   │
+│   │   ├── contact/
+│   │   │   ├── HeroSectionContact.tsx
+│   │   │   ├── IntroSectionContact.tsx
+│   │   │   └── ShortTextContact.tsx
+│   │   │
+│   │   ├── about/
+│   │       ├── HeroSectionAbout.tsx
+│   │       ├── IntroSectionAbout.tsx
+│   │       └── ShortTextAbout.tsx
+│   │
+│   └── breadcrumbs/
+│       └── breadcrumbs.css.ts   # Stil global pentru breadcrumbs
+│
+├── pages/
+│   ├── index.tsx                 # Homepage (Hero + Intro + Separator + ShortText + GalleryPreview)
+│   ├── galerie.tsx                # Pagina Galerie + Breadcrumbs + JSON-LD
+│   ├── contact.tsx                # Pagina Contact + Breadcrumbs + JSON-LD
+│   ├── about.tsx                  # Pagina About + Breadcrumbs + JSON-LD
+│   │
+│   ├── api/                       # API routes (dacă e nevoie)
+│   └── users/                     # Exemplu de structură suplimentară
+│
+├── styles/
+│   ├── tokens.css.ts              # Variabile globale (culori, fonturi, spațieri)
+│   ├── container.css.ts           # Container global de pagină
+│   ├── homepage/heroSectionHomepage.css.ts
+│   ├── animations/heroText.ts     # Animație globală text Hero
+│   └── breadcrumbs.css.ts         # Stil global breadcrumbs (culoare, font, hover)
+│
+├── public/
+│   ├── favicon.ico
+│   └── (alte imagini statice)
+│
+├── package.json
+└── tsconfig.json
