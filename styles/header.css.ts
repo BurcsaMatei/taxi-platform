@@ -1,172 +1,99 @@
 // styles/header.css.ts
-import { style, createVar, globalStyle } from '@vanilla-extract/css';
-import { vars } from './tokens.css';
+import { style, createVar, globalStyle } from "@vanilla-extract/css";
+import { vars } from "./tokens.css";
 
-// =======================
-// Variabile header
-// =======================
+/* Vars: înălțimea header-ului (dacă ai nevoie ulterior) */
 export const headerHeightVar = createVar();
 
-export const headerVarsClass = style({
-  vars: { [headerHeightVar]: '64px' }, // desktop
-  '@media': {
-    'screen and (max-width: 900px)': {
-      vars: { [headerHeightVar]: '56px' }, // mobil
-    },
-  },
-});
-
-// =======================
-// Layout header
-// =======================
+/* Header wrapper */
 export const headerClass = style({
-  position: 'sticky',
+  position: "sticky",
   top: 0,
-  left: 0,
-  width: '100%',
-  background: vars.color.headerBg,
+  width: "100%",
   zIndex: 3000,
-  isolation: 'isolate',
-  boxShadow: '0 6px 28px -8px rgba(50,60,90,0.16)',
-  borderBottom: `1px solid ${vars.color.primary}`,
+  background: vars.color.headerBg,
+  borderBottom: `1px solid #e5e7eb`,
+  boxShadow: "0 6px 28px -8px rgba(50,60,90,0.16)",
 });
 
+/* Container intern */
 export const headerInnerClass = style({
   maxWidth: 1200,
-  margin: '0 auto',
-  width: '100%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  minHeight: headerHeightVar,
+  margin: "0 auto",
+  width: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
   padding: `${vars.spacing.md} ${vars.spacing.lg}`,
-  position: 'relative',
+  minHeight: headerHeightVar,
 });
 
-// =======================
-// Logo box
-// =======================
+/* Logo */
 export const logoBoxClass = style({
-  height: headerHeightVar,
-  boxSizing: 'border-box',
-  display: 'flex',
-  alignItems: 'center',
-  paddingTop: '8px',
-  paddingBottom: '8px',
-  maxWidth: '240px',
-  // ✂️ elimină `color: vars.color.text`
+  height: "56px",
+  display: "flex",
+  alignItems: "center",
+  maxWidth: "240px",
+});
+globalStyle(`${logoBoxClass} svg`, { display: "block", height: "100%", width: "auto" });
+
+/* Desktop nav */
+export const desktopNavClass = style({
+  display: "none",
+  "@media": { "screen and (min-width: 901px)": { display: "flex", gap: "24px", alignItems: "center" } },
 });
 
-// păstrează DOAR dimensiunile pentru <svg>
-globalStyle(`${logoBoxClass} svg`, {
-  display: 'block',
-  height: '100%',
-  width: 'auto',
-});
-
-// =======================
-// Nav desktop
-// =======================
-export const navClass = style({
-  display: 'flex',
-  gap: vars.spacing.md,
-  alignItems: 'center',
-  '@media': { 'screen and (max-width: 900px)': { display: 'none' } },
-});
-
-export const navLinkClass = style({
-  position: 'relative',
+export const desktopNavLinkClass = style({
   color: vars.color.text,
+  textDecoration: "none",
   fontWeight: 500,
-  fontSize: '1.05rem',
-  textDecoration: 'none',
-  transition: 'color 0.2s',
-  ':hover': { color: vars.color.primary },
-  selectors: {
-    '&:after': {
-      content: '""',
-      display: 'block',
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: '-3px',
-      height: '2px',
-      width: 0,
-      background: vars.color.primary,
-      transition: 'width 0.22s cubic-bezier(.6,.18,.34,1.35)',
-    },
-    '&:hover:after': { width: '100%' },
-  },
+  fontSize: "1.05rem",
+  transition: "color 0.2s",
+  ":hover": { color: vars.color.primary },
 });
 
-// =======================
-// Mobil: hamburger + nav + overlay
-// =======================
-export const hamburgerClass = style({
-  display: 'none',
-  background: 'none',
-  border: 'none',
-  fontSize: '2.3rem',
-  cursor: 'pointer',
-  zIndex: 3300,
-  '@media': { 'screen and (max-width: 900px)': { display: 'block' } },
+/* Burger button (mobil) */
+export const burgerButtonClass = style({
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  fontSize: "2rem",
+  "@media": { "screen and (min-width: 901px)": { display: "none" } },
 });
 
+/* Mobile nav container (sub header), simplu */
 export const mobileNavClass = style({
-  display: 'none',
-  flexDirection: 'column',
-  gap: vars.spacing.md,
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  width: '100vw',
+  display: "block",
   background: vars.color.headerBg,
-  padding: `calc(${headerHeightVar} + 2vw) 8vw 4vw 8vw`,
-  border: 'none',
-  borderRadius: 0,
-  boxShadow: '0 12px 32px 0 rgba(50,60,90,0.12)', // <- FIX: ghilimele corecte
-  zIndex: 3200,
-  '@media': { 'screen and (max-width: 900px)': { display: 'flex' } },
+  borderTop: "1px solid #e5e7eb",
+  "@media": { "screen and (min-width: 901px)": { display: "none" } },
 });
 
-export const mobileOverlayClass = style({
-  display: 'none',
-  position: 'fixed',
-  zIndex: 3100,
-  top: 0,
-  left: 0,
-  width: '100vw',
-  height: '100vh',
-  background: 'rgba(44,52,66,0.18)',
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
-  transition: 'opacity 0.2s',
-  '@media': { 'screen and (max-width: 900px)': { display: 'block' } },
+/* UL vertical, fără bullets — coloană garantat */
+export const mobileListClass = style({
+  listStyle: "none",
+  margin: 0,
+  padding: `12px ${vars.spacing.lg} 16px`,
+  display: "flex",
+  flexDirection: "column",
+  rowGap: "8px",
 });
 
-// =======================
-// Socials (nav mobil)
-// =======================
-export const mobileNavExtrasClass = style({
-  marginTop: '2rem',
-  paddingTop: '1.3rem',
-  borderTop: '1px solid #e4e8ef',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '1.15rem',
-  alignItems: 'flex-start',
+/* LI bloc */
+export const mobileListItemClass = style({
+  display: "block",
 });
 
-export const socialIconsWrapperClass = style({
-  display: 'flex',
-  gap: '14px',
-  marginTop: vars.spacing.md,
-});
-
-export const socialIconClass = style({
-  color: vars.color.secondary,
-  transition: 'color 0.2s',
-  verticalAlign: 'middle',
-  display: 'inline-block',
-  selectors: { '&:hover': { color: vars.color.primary } },
+/* Link mobil — block 100%, ocupă rândul */
+export const mobileNavLinkClass = style({
+  display: "block",
+  width: "100%",
+  padding: "12px 0",
+  color: vars.color.text,
+  textDecoration: "none",
+  fontWeight: 500,
+  fontSize: "1.05rem",
+  lineHeight: 1.25,
+  transition: "color 0.2s",
+  ":hover": { color: vars.color.primary },
 });

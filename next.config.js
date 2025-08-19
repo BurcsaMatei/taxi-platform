@@ -5,10 +5,19 @@ const withVanillaExtract = createVanillaExtractPlugin();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  compress: true,
 
-  images: { formats: ['image/avif', 'image/webp'] },
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [360, 640, 768, 1024, 1280, 1536, 1920],
+    imageSizes: [160, 240, 320, 480, 640, 820],
+  },
 
-  // ⬇️ SVGR pentru .svg ca React component
+  experimental: {
+    optimizeCss: true,
+  },
+
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/i,
@@ -25,24 +34,24 @@ const nextConfig = {
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
-      "font-src 'self' data:",
+      "img-src 'self' https: data: blob:",
+      "font-src 'self' https: data:",
       "connect-src 'self' ws:",
       "frame-ancestors 'self'",
       "base-uri 'self'",
-      "form-action 'self'"
+      "form-action 'self'",
     ].join('; ');
 
     const cspProd = [
       "default-src 'self'",
       "script-src 'self'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
-      "font-src 'self' data:",
+      "img-src 'self' https: data: blob:",
+      "font-src 'self' https: data:",
       "connect-src 'self'",
       "frame-ancestors 'self'",
       "base-uri 'self'",
-      "form-action 'self'"
+      "form-action 'self'",
     ].join('; ');
 
     const securityHeaders = [

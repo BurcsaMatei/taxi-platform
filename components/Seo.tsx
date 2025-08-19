@@ -2,20 +2,18 @@
 import Head from "next/head";
 
 type SeoProps = {
-  /** Titlul paginii (fără brand). Ex: "Galerie" */
-  title?: string;
-  /** Meta description scurt (140–160c) */
-  description?: string;
-  /** Calea imaginii OG din /public (ex: "/images/og-galerie.jpg") sau URL absolut */
-  image?: string;
-  /** Canonical absolut; dacă dai doar path (ex: "/galerie"), îl fac absolut automat */
-  url?: string;
-  /** Setează noindex/nofollow pentru pagini speciale (ex: preview) */
+  title?: string;        // Ex: "Servicii"
+  description?: string;  // 140–160c
+  image?: string;        // "/images/og-services.jpg" sau URL absolut
+  url?: string;          // "/services" sau URL absolut
   noindex?: boolean;
 };
 
 const SITE_NAME = "KonceptID";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const RAW_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+// normalize: eliminăm orice trailing slash
+const SITE_URL = RAW_SITE_URL.replace(/\/+$/, "");
+
 const DEFAULT_TITLE = "Agenție web design și digital | KonceptID";
 const DEFAULT_DESC =
   "Lorem ipsum dolores sit amet. Exemplu meta description pentru proiectul tău base-template.";
@@ -23,7 +21,10 @@ const DEFAULT_IMG = "/images/og.jpg"; // pune fișierul în /public/images/og.jp
 
 function toAbsoluteUrl(input?: string) {
   if (!input) return SITE_URL;
-  return input.startsWith("http") ? input : `${SITE_URL}${input}`;
+  // dacă e deja absolut, lasă-l
+  if (/^https?:\/\//i.test(input)) return input;
+  // input relativ -> prefix cu domeniul normalizat
+  return `${SITE_URL}${input.startsWith("/") ? input : `/${input}`}`;
 }
 
 export default function Seo({
@@ -36,10 +37,7 @@ export default function Seo({
   const metaTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
   const metaDesc = description ?? DEFAULT_DESC;
 
-  // Canonical (absolut)
   const canonical = toAbsoluteUrl(url ?? "/");
-
-  // OG image (absolută — dacă treci /images/.. o prefixăm cu domeniul)
   const ogImageAbs = toAbsoluteUrl(image ?? DEFAULT_IMG);
 
   return (
@@ -52,7 +50,10 @@ export default function Seo({
       <link rel="canonical" href={canonical} />
 
       {/* Robots */}
-      <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow"} />
+      <meta
+        name="robots"
+        content={noindex ? "noindex, nofollow" : "index, follow"}
+      />
 
       {/* Open Graph */}
       <meta property="og:type" content="website" />

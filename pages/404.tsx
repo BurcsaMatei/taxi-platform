@@ -1,17 +1,28 @@
+// pages/404.tsx
+import Head from "next/head";
 import Link from "next/link";
-import { errorWrap, errorCard, errorTitle, errorText, errorLink } from "../styles/errorPages.css"
 
 export default function NotFoundPage() {
   return (
-    <div className={errorWrap}>
-      <div className={errorCard} role="alert" aria-live="assertive">
-        <h1 className={errorTitle}>Pagina nu a fost găsită (404)</h1>
-        <p className={errorText}>
-          Ne pare rău, linkul poate fi greșit sau pagina a fost mutată.
-        </p>
-        <Link href="/" className={errorLink}>Înapoi la Acasă</Link>
-      </div>
-    </div>
+    <>
+      <Head>
+        <title>Pagina nu a fost găsită – 404</title>
+        <meta name="robots" content="noindex" />
+      </Head>
+
+      <main style={{ minHeight: "60vh", display: "grid", placeItems: "center", padding: "48px 16px" }}>
+        <div style={{ textAlign: "center", maxWidth: 640 }}>
+          <h1 style={{ margin: 0, fontSize: 36 }}>404 – Pagina nu există</h1>
+          <p style={{ marginTop: 12, color: "#4b5563" }}>
+            Ne pare rău, pagina căutată nu a fost găsită.
+          </p>
+          <div style={{ marginTop: 20 }}>
+            <Link href="/" style={{ color: "#5561F2", fontWeight: 600 }}>
+              Înapoi la Acasă →
+            </Link>
+          </div>
+        </div>
+      </main>
+    </>
   );
 }
-

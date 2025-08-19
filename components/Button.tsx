@@ -1,3 +1,4 @@
+// components/Button.tsx
 import React, { ReactNode } from "react";
 import Link from "next/link";
 import { buttonClass } from "../styles/button.css";
@@ -11,15 +12,15 @@ type Common = {
 
 type AnchorButtonProps = Common &
   React.AnchorHTMLAttributes<HTMLAnchorElement> & {
-    href: string;              // dacă există href => randăm link
+    href: string; // dacă există href => randăm link
   };
 
 type RealButtonProps = Common &
   React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    href?: undefined;          // fără href => randăm button
+    href?: undefined; // fără href => randăm button
   };
 
-// Supraincarcare pentru typing bun în JSX
+// ✅ Supraincarcare pentru typing bun în JSX
 export default function Button(props: AnchorButtonProps): JSX.Element;
 export default function Button(props: RealButtonProps): JSX.Element;
 export default function Button({
@@ -28,13 +29,12 @@ export default function Button({
   href,
   ...rest
 }: AnchorButtonProps | RealButtonProps) {
-  // LINK (anchor)
+  // === LINK (anchor) ===
   if (href) {
     const anchorProps = rest as React.AnchorHTMLAttributes<HTMLAnchorElement>;
     const isExternal =
       typeof href === "string" && /^(https?:)?\/\//i.test(href);
 
-    // Next 13+ Link: putem pune className direct pe <Link />
     return (
       <Link
         href={href}
@@ -49,7 +49,7 @@ export default function Button({
     );
   }
 
-  // BUTTON
+  // === BUTTON ===
   const buttonProps = rest as React.ButtonHTMLAttributes<HTMLButtonElement>;
   return (
     <button className={buttonClass[variant]} {...buttonProps}>

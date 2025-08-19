@@ -1,4 +1,3 @@
-// components/Footer.tsx
 'use client';
 
 import Link from "next/link";
@@ -8,16 +7,19 @@ import {
   footerDividerClass,
   footerCopyClass,
 } from "../styles/footer.css";
-import { useCookieConsent } from "@/components/cookies/CookieProvider";
+import { useCookieConsent } from "../components/cookies/CookieProvider";
 
 // ✅ logo din src/assets (SVGR)
-import LogoMark from "@assets/logo.svg";
+import LogoMark from "../src/assets/logo.svg";
+
+// ✅ import nou pentru linkuri externe
+import ExternalLink from "./ExternalLink";
 
 export default function Footer() {
   const { openSettings } = useCookieConsent();
 
   return (
-    <footer className={footerClass}>
+    <footer className={footerClass} role="contentinfo">
       {/* Logo centrat deasupra liniei */}
       <div className={footerLogoBoxClass}>
         <Link
@@ -25,7 +27,6 @@ export default function Footer() {
           aria-label="KonceptID — Acasă"
           style={{ lineHeight: 0, display: "inline-flex", alignItems: "center" }}
         >
-          {/* SVG inline — setăm înălțimea la ~40px ca în varianta veche */}
           <LogoMark style={{ display: "block", height: 40, width: "auto" }} />
         </Link>
       </div>
@@ -49,7 +50,12 @@ export default function Footer() {
         >
           Setări cookie
         </a>{" "}
-        · <a href="/cookie-policy">Politica Cookie</a>
+        ·{" "}
+        <Link href="/cookie-policy">
+          Politica Cookie
+        </Link>{" "}
+        ·{" "}
+        <ExternalLink href="https://anpc.ro/">ANPC</ExternalLink>
       </div>
     </footer>
   );

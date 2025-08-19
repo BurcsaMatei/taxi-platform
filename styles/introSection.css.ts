@@ -19,7 +19,7 @@ export const introTitleClass = style({
 export const introTextClass = style({
   fontSize: '1.15rem',
   fontWeight: 400,
-  color: vars.color.textSecondary ?? '#555',
+
   lineHeight: 1.5,
   fontFamily: vars.font.base,
 });

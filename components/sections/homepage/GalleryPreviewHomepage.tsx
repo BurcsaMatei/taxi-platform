@@ -1,12 +1,14 @@
 // components/sections/homepage/GalleryPreviewHomepage.tsx
 import { useMemo, useRef } from "react";
 import Link from "next/link";
-import Img from "@/components/ui/Img";
-import { buildGalleryItems } from "@/lib/gallery";
+import Img from "../../ui/Img";
+import { buildGalleryItems } from "../../../lib/gallery";
+
 import {
   gpSection, gpTrack, gpItem, gpImage, gpCaption,
   gpHeader, gpCtaRow, gpNavBtnLeft, gpNavBtnRight,
 } from "../../../styles/homepage/galleryPreviewHomepage.css";
+
 
 
 
@@ -56,13 +58,12 @@ export default function GalleryPreviewHomepage() {
             <div className={gpImage}>
               <Img
                 src={it.src}
-                alt={it.alt}
-                fill
-                sizes={PREVIEW_SIZES}
-                style={{ objectFit: "cover" }}
-                priority={idx === 0}
-                loading={idx === 0 ? "eager" : "lazy"}
-                quality={75}
+  alt={it.alt}
+  fill
+  sizes={PREVIEW_SIZES}
+  style={{ objectFit: "cover" }}
+  priority={idx === 0}   // primul poate fi LCP/above-the-fold
+  quality={75}
               />
             </div>
             <div className={gpCaption}>{it.alt}</div>

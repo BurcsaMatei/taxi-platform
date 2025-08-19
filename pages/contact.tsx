@@ -1,26 +1,25 @@
 // pages/contact.tsx
 import Head from "next/head";
+import Seo from "../components/Seo";
+
+import Breadcrumbs from "../components/Breadcrumbs";
+
 import HeroSectionContact from "../components/sections/contact/HeroSectionContact";
 import IntroSectionContact from "../components/sections/contact/IntroSectionContact";
 import Separator from "../components/Separator";
 import ShortTextContact from "../components/sections/contact/ShortTextContact";
 import FormContact from "../components/sections/contact/FormContact";
 import ContactInfo from "../components/sections/contact/ContactInfo";
-import ContactMapIframeConsent from "@/components/sections/contact/ContactMapIframeConsent";
+import ContactMapIframeConsent from "../components/sections/contact/ContactMapIframeConsent";
 
 // Styles
-import {
-  breadcrumbsWrapperClass,
-  breadcrumbsListClass,
-  breadcrumbLinkClass,
-  breadcrumbCurrentClass,
-} from "../styles/breadcrumbs.css";
 import { container } from "../styles/container.css";
+import { mapSectionClass } from "../styles/contact.css";
 
 // Date contact – modificabile rapid
 const contactData = {
   businessName: "KonceptID",
-  url: "https://konceptid.com/contact",
+  url: "/contact", // dăm doar path-ul; Seo va construi absolut
   email: "info@konceptid.com",
   phone: "+40 751 528 414",
   address: {
@@ -35,21 +34,22 @@ const contactData = {
 };
 
 // Breadcrumbs + JSON-LD
-const breadcrumbs = [
-  { name: "Acasă", url: "https://konceptid.com/" },
-  { name: "Contact", url: "https://konceptid.com/contact" },
+const RAW_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const SITE_URL = RAW_SITE_URL.replace(/\/+$/, "");
+
+const crumbs = [
+  { name: "Acasă", href: "/" },
+  { name: "Contact", current: true },
 ];
 
 const breadcrumbList = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
-  itemListElement: breadcrumbs.map((item, idx) => ({
-    "@type": "ListItem",
-    position: idx + 1,
-    name: item.name,
-    item: item.url,
-  })),
-};
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Acasă", item: `${SITE_URL}/` },
+    { "@type": "ListItem", position: 2, name: "Contact", item: `${SITE_URL}/contact` },
+  ],
+} as const;
 
 const contactJsonLd = {
   "@context": "https://schema.org",
@@ -57,7 +57,7 @@ const contactJsonLd = {
   mainEntity: {
     "@type": "Organization",
     name: contactData.businessName,
-    url: contactData.url,
+    url: `${SITE_URL}${contactData.url}`,
     contactPoint: {
       "@type": "ContactPoint",
       telephone: contactData.phone,
@@ -73,14 +73,20 @@ const contactJsonLd = {
       addressCountry: contactData.address.country,
     },
   },
-};
+} as const;
 
 const ContactPage = () => (
   <>
+    {/* SEO per pagină */}
+    <Seo
+      title="Contact"
+      description={`Contact ${contactData.businessName}`}
+      url={contactData.url} // path relativ -> Seo face absolut
+      image="/images/og-contact.jpg" // opțional
+    />
+
+    {/* JSON-LD în <Head> */}
     <Head>
-      <title>Contact - {contactData.businessName}</title>
-      <meta name="description" content={`Contact ${contactData.businessName}`} />
-      <link rel="canonical" href={contactData.url} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbList) }}
@@ -91,14 +97,8 @@ const ContactPage = () => (
       />
     </Head>
 
-    {/* Breadcrumb vizual */}
-    <nav aria-label="breadcrumb" className={breadcrumbsWrapperClass}>
-      <ol className={breadcrumbsListClass}>
-        <li><a href="/" className={breadcrumbLinkClass}>Acasă</a></li>
-        <li style={{ margin: "0 7px", color: "#b5b5b5" }}>/</li>
-        <li className={breadcrumbCurrentClass} aria-current="page">Contact</li>
-      </ol>
-    </nav>
+    {/* Breadcrumbs (separator „/” vine din CSS-ul componentei) */}
+    <Breadcrumbs items={crumbs} />
 
     {/* Secțiuni */}
     <HeroSectionContact />
@@ -106,7 +106,7 @@ const ContactPage = () => (
     <Separator />
     <ShortTextContact />
 
-    {/* Info cards – o singură dată */}
+    {/* Info cards */}
     <ContactInfo />
     <Separator />
 
@@ -115,11 +115,8 @@ const ContactPage = () => (
     <Separator />
 
     {/* Hartă cu consimțământ (click-to-load) */}
-    <section className={container} style={{ marginTop: "40px" }}>
-      <ContactMapIframeConsent
-        src={contactData.mapEmbedUrl}
-        // title și buttonLabel sunt opționale în componentă
-      />
+    <section className={`${container} ${mapSectionClass}`}>
+      <ContactMapIframeConsent src={contactData.mapEmbedUrl} />
     </section>
   </>
 );

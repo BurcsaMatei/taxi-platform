@@ -1,4 +1,3 @@
-// tsconfig.json
 {
   "compilerOptions": {
     "target": "ES2020",
@@ -15,23 +14,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
-
-    // Alias-uri
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"],
-      "@assets/*": ["./src/assets/*", "./assets/*"] // ⬅️ vezi nota de mai jos
-    },
-
-    // Asigurăm rezolvarea tipurilor custom (ex: *.svg)
-    "typeRoots": ["./types", "./node_modules/@types"]
+    "incremental": true
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    "types/**/*.d.ts"             // ⬅️ important pt. types/svg.d.ts
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "types/**/*.d.ts"],
   "exclude": ["node_modules"]
 }

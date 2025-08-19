@@ -1,7 +1,12 @@
 // components/cookies/CookieProvider.tsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { readConsent, writeConsent, removeConsent } from "@/lib/cookies";
+import {
+  readConsent,
+  writeConsent,
+  removeConsent,
+  isGrantedConsent,
+} from "../../lib/cookies";
 
 type ConsentCtx = {
   // state
@@ -35,14 +40,18 @@ export default function CookieProvider({ children }: { children: React.ReactNode
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
 
-  // init din localStorage
+  // init din storage (granular, cu type guard)
   useEffect(() => {
     const stored = readConsent();
-    if (stored) {
+
+    if (isGrantedConsent(stored)) {
       setAnalytics(!!stored.granted.analytics);
       setMarketing(!!stored.granted.marketing);
       setBannerVisible(false);
     } else {
+      // denied sau null
+      setAnalytics(false);
+      setMarketing(false);
       setBannerVisible(true);
     }
   }, []);
@@ -54,15 +63,13 @@ export default function CookieProvider({ children }: { children: React.ReactNode
   };
 
   // actions
-  const openSettings = () => {
-    setDialogOpen(true);
-  };
+  const openSettings = () => setDialogOpen(true);
   const closeDialog = () => setDialogOpen(false);
 
   const acceptAll = () => {
     setAnalytics(true);
     setMarketing(true);
-    writeConsent({ necessary: true, analytics: true, marketing: true });
+    writeConsent({ granted: { necessary: true, analytics: true, marketing: true } });
     setBannerVisible(false);
     setDialogOpen(false);
   };
@@ -70,20 +77,24 @@ export default function CookieProvider({ children }: { children: React.ReactNode
   const rejectAll = () => {
     setAnalytics(false);
     setMarketing(false);
-    writeConsent({ necessary: true, analytics: false, marketing: false });
+    // poți considera „denied” sau grant doar pentru necessary
+    writeConsent({ denied: true });
     setBannerVisible(false);
     setDialogOpen(false);
   };
 
   const savePrefs = () => {
-    writeConsent({ necessary: true, analytics, marketing });
+    writeConsent({ granted: { necessary: true, analytics, marketing } });
     setBannerVisible(false);
     setDialogOpen(false);
   };
 
   const resetConsent = () => {
     removeConsent();
+    setAnalytics(false);
+    setMarketing(false);
     setBannerVisible(true);
+    setDialogOpen(false);
   };
 
   const value = useMemo<ConsentCtx>(
@@ -221,7 +232,7 @@ function CookieDialog() {
               checked={marketing}
               onChange={(e) => setMarketing(e.target.checked)}
             />
-            <span>Personalizare reclame și tracking cross‑site</span>
+            <span>Personalizare reclame și tracking cross-site</span>
           </label>
         </fieldset>
 

@@ -7,7 +7,7 @@ export type CardGridItem = {
   id?: string | number;
   src: string;
   alt: string;
-  caption?: string;
+  caption?: React.ReactNode;   // 🔹 acum acceptă ReactNode
   sizes?: string;
   priority?: boolean;
 };
@@ -18,6 +18,7 @@ type CardGridProps = {
   "aria-label"?: string;
   sizes?: string;
   aboveTheFold?: boolean;
+  captionClassName?: string;   // 🔹 nou: putem trece o clasă pentru caption
   onItemClick?: (index: number, item: CardGridItem) => void;
 };
 
@@ -30,6 +31,7 @@ const CardGrid: React.FC<CardGridProps> = ({
   "aria-label": ariaLabel = "Card grid",
   sizes = DEFAULT_SIZES,
   aboveTheFold = false,
+  captionClassName,
   onItemClick,
 }) => {
   const cls = [cardGridClass, className].filter(Boolean).join(" ");
@@ -40,13 +42,14 @@ const CardGrid: React.FC<CardGridProps> = ({
         {cards.map((item, idx) => {
           const isFirst = idx === 0 && aboveTheFold;
           const priority = item.priority ?? isFirst;
-          const quality = priority ? 75 : 60; // 👈 thumbnails mai „ieftine”
+          const quality = priority ? 75 : 60;
 
           const cardEl = (
             <Card
               src={item.src}
               alt={item.alt}
               caption={item.caption}
+              captionClassName={captionClassName}  // 🔹 pasăm clasa
               priority={priority}
               sizes={item.sizes ?? sizes}
               quality={quality}
@@ -58,7 +61,7 @@ const CardGrid: React.FC<CardGridProps> = ({
               {onItemClick ? (
                 <button
                   type="button"
-                  aria-label={`Deschide imaginea ${item.alt}`}
+                  aria-label={`Deschide ${typeof item.caption === "string" ? item.caption : "cardul"}`}
                   onClick={() => onItemClick(idx, item)}
                   style={{ all: "unset", cursor: "pointer", display: "block", width: "100%" }}
                 >

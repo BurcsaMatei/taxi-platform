@@ -1,30 +1,39 @@
-import { style } from '@vanilla-extract/css';
-import { vars } from './tokens.css';
+// styles/breadcrumbs.css.ts
+import { style } from "@vanilla-extract/css";
 
 export const breadcrumbsWrapperClass = style({
-  display: 'flex',
-  justifyContent: 'center',
-  margin: '18px 0',
+  margin: "1rem 0",
+  display: "flex",          // 🔹 adăugat
+  justifyContent: "center", // 🔹 adăugat
 });
+
 export const breadcrumbsListClass = style({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '9px',
+  display: "flex",
+  alignItems: "center",
+  listStyle: "none",
   padding: 0,
   margin: 0,
-  listStyle: 'none',
 });
+
 export const breadcrumbLinkClass = style({
-  color: '#333',
-  textDecoration: 'none',
-  fontWeight: 500,
-  fontSize: 'rem',
-  transition: 'color 0.18s',
-  ':hover': {
-    color: vars.color.secondary,
+  color: "#1d4ed8", // albastru link
+  textDecoration: "none",
+  ":hover": {
+    textDecoration: "underline",
   },
 });
+
 export const breadcrumbCurrentClass = style({
-  color: '#222',
-  fontWeight: 600,
+  color: "#6b7280", // gri pentru ultima treaptă
+});
+
+/* 🔹 Separatorul "/" automat */
+export const breadcrumbItemClass = style({
+  selectors: {
+    "&:not(:first-child)::before": {
+      content: "'/'",
+      margin: "0 0.5rem",
+      color: "#b5b5b5",
+    },
+  },
 });

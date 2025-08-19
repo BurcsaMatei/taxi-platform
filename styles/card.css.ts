@@ -1,7 +1,8 @@
+// styles/card.css.ts
 import { style } from '@vanilla-extract/css';
 import { vars } from './tokens.css';
 
-// Card wrapper (folosit de FormContact ca `card`)
+// Card wrapper
 export const card = style({
   background: vars.color.background,
   borderRadius: vars.radius.base,
@@ -9,7 +10,7 @@ export const card = style({
   overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
+  alignItems: 'stretch', // 🔹 întinde imaginea pe toată lățimea
   transition: 'transform 0.18s cubic-bezier(.5,1.5,.5,1), box-shadow .18s ease',
   selectors: {
     '&:hover': {
@@ -19,27 +20,15 @@ export const card = style({
   },
   maxWidth: 440,
   margin: '0 auto',
-  padding: vars.spacing.lg,
 });
 
-// Alias pentru compatibilitate cu Card.tsx (importă `cardClass`)
+// Alias pentru compatibilitate
 export const cardClass = card;
-
-// Imagine din card
-export const cardImageClass = style({
-  width: '100%',
-  display: 'block',
-  aspectRatio: '4 / 3',
-  objectFit: 'cover',
-  background: '#e7e9f1',
-  borderTopLeftRadius: vars.radius.base,
-  borderTopRightRadius: vars.radius.base,
-});
 
 // Caption / conținut
 export const cardCaptionClass = style({
   width: '100%',
-  padding: vars.spacing.md,
+  padding: vars.spacing.lg, // 🔹 padding doar pe caption
   color: vars.color.text,
   textAlign: 'center',
   fontWeight: 500,

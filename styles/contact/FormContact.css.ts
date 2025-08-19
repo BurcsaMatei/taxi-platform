@@ -1,11 +1,17 @@
+// styles/contact/FormContact.css.ts
 import { style } from "@vanilla-extract/css";
 import { vars } from "../tokens.css";
+
+export const formCard = style({
+  // Padding controlat local pentru cardul formularului
+  padding: "32px 24px",
+});
 
 export const form = style({
   display: "flex",
   flexDirection: "column",
   gap: vars.spacing.lg,
-  padding: 0,
+  padding: 0, // fără padding aici; îl controlează formCard
 });
 
 export const group = style({
@@ -17,7 +23,7 @@ export const group = style({
 export const label = style({
   fontWeight: 500,
   fontFamily: vars.font.base,
-  fontSize: "15px",           // hardcode, pentru că nu ai încă size în tokens
+  fontSize: "15px",
   color: vars.color.primary,
   marginBottom: 2,
 });
@@ -27,7 +33,7 @@ export const input = style({
   borderRadius: vars.radius.base,
   padding: `${vars.spacing.sm} ${vars.spacing.md}`,
   fontFamily: vars.font.base,
-  fontSize: "15px",           // hardcode până adaugi în tokens
+  fontSize: "15px",
   color: vars.color.text,
   background: vars.color.background,
   outline: "none",
@@ -77,6 +83,7 @@ export const error = style({
   fontSize: "14px",
   marginTop: 2,
 });
+
 export const success = style({
   color: "#219150",
   fontWeight: 500,
