@@ -6,10 +6,10 @@ import Head from "next/head";
 import Seo from "../components/Seo";
 import Breadcrumbs from "../components/Breadcrumbs";
 
-import HeroSectionGallery from "../components/sections/gallery/HeroSectionGallery";
-import IntroSectionGallery from "../components/sections/gallery/IntroSectionGallery";
+import Hero from "../components/sections/Hero";
+import IntroSection from "../components/sections/IntroSection";
+import ShortText from "../components/sections/ShortText";
 import Separator from "../components/Separator";
-import ShortTextGallery from "../components/sections/gallery/ShortTextGallery";
 import CardGrid from "../components/CardGrid";
 import { buildGalleryItems, GALLERY_COUNT } from "../lib/gallery";
 
@@ -37,6 +37,7 @@ export default function GaleriePage() {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
+  // captions plugin (lazy când se deschide lightbox-ul)
   const [captionsPlugin, setCaptionsPlugin] = useState<any | null>(null);
   useEffect(() => {
     if (!open || captionsPlugin) return;
@@ -45,6 +46,7 @@ export default function GaleriePage() {
     );
   }, [open, captionsPlugin]);
 
+  // infinite scroll via IntersectionObserver
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const lockRef = useRef(false);
   const [ioSupported, setIoSupported] = useState(false);
@@ -70,18 +72,14 @@ export default function GaleriePage() {
           lockRef.current = false;
         }, 350);
       },
-      {
-        root: null,
-        rootMargin: "400px 0px",
-        threshold: 0.01,
-      }
+      { root: null, rootMargin: "400px 0px", threshold: 0.01 }
     );
 
     io.observe(el);
     return () => io.disconnect();
   }, [ioSupported, canLoadMore, cards.length]);
 
-  // Crumbs vizuale
+  // Breadcrumbs (vizual + JSON-LD)
   const crumbs = [
     { name: "Acasă", href: "/" },
     { name: "Galerie", current: true },
@@ -90,7 +88,6 @@ export default function GaleriePage() {
   return (
     <>
       <Head>
-        {/* JSON-LD pentru breadcrumbs */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -113,13 +110,30 @@ export default function GaleriePage() {
         url="/galerie"
       />
 
-      {/* Breadcrumbs reutilizabil */}
       <Breadcrumbs items={crumbs} />
 
-      <HeroSectionGallery />
-      <IntroSectionGallery />
+      {/* === Hero/Intro/ShortText — componente generice === */}
+      <Hero
+        title="Galerie"
+        subtitle="Selecție de proiecte și lucrări."
+        image={{ src: "/images/hero/gallery.jpg", alt: "Hero galerie", priority: true }}
+        height="md"
+        withOverlay
+        // align="center" (implicit)
+      />
+
+      <IntroSection
+        eyebrow="Portofoliu"
+        title="Imagini reprezentative"
+        lede="Explorează fotografii cu rezultate reale. Click pe oricare pentru a deschide lightbox-ul."
+      />
+
       <Separator />
-      <ShortTextGallery />
+
+      <ShortText
+        title="Cum funcționează"
+        subtitle="Scroll pentru încărcare automată a imaginilor. Dacă nu este disponibilă, folosește butonul de mai jos."
+      />
 
       <CardGrid
         cards={visibleCards}
