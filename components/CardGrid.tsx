@@ -1,81 +1,82 @@
-// components/CardGrid.tsx
-import React from "react";
-import Card from "./Card";
-import { cardGridClass } from "../styles/cardGrid.css";
+import Grid from "./Grid";
+import Img from "./ui/Img";
 
-export type CardGridItem = {
-  id?: string | number;
+export type GalleryCard = {
   src: string;
   alt: string;
-  caption?: React.ReactNode;   // 🔹 acum acceptă ReactNode
-  sizes?: string;
-  priority?: boolean;
+  caption?: string;
+  href?: string; // opțional
 };
 
-type CardGridProps = {
-  cards: CardGridItem[];
-  className?: string;
-  "aria-label"?: string;
-  sizes?: string;
-  aboveTheFold?: boolean;
-  captionClassName?: string;   // 🔹 nou: putem trece o clasă pentru caption
-  onItemClick?: (index: number, item: CardGridItem) => void;
+type Props = {
+  cards: GalleryCard[];
+  onItemClick?: (index: number) => void;
+  aboveTheFold?: boolean; // dacă true, dăm priority la primele N
+  priorityCount?: number; // default 6
 };
 
-const DEFAULT_SIZES =
-  "(max-width: 600px) 100vw, (max-width: 900px) 50vw, (max-width: 1200px) 33vw, 290px";
-
-const CardGrid: React.FC<CardGridProps> = ({
+export default function CardGrid({
   cards,
-  className,
-  "aria-label": ariaLabel = "Card grid",
-  sizes = DEFAULT_SIZES,
-  aboveTheFold = false,
-  captionClassName,
   onItemClick,
-}) => {
-  const cls = [cardGridClass, className].filter(Boolean).join(" ");
+  aboveTheFold = false,
+  priorityCount = 6,
+}: Props) {
+  const handleClick = (i: number) => {
+    onItemClick?.(i);
+  };
 
   return (
-    <section aria-label={ariaLabel}>
-      <ul className={cls}>
-        {cards.map((item, idx) => {
-          const isFirst = idx === 0 && aboveTheFold;
-          const priority = item.priority ?? isFirst;
-          const quality = priority ? 75 : 60;
+    <Grid cols={{ base: 2, md: 3, lg: 5 }} gap="16px">
+      {cards.map((c, i) => {
+        const priority = aboveTheFold && i < priorityCount;
 
-          const cardEl = (
-            <Card
-              src={item.src}
-              alt={item.alt}
-              caption={item.caption}
-              captionClassName={captionClassName}  // 🔹 pasăm clasa
-              priority={priority}
-              sizes={item.sizes ?? sizes}
-              quality={quality}
-            />
-          );
+        const body = (
+          <>
+            <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 3", borderRadius: 12, overflow: "hidden" }}>
+              <Img
+                src={c.src}
+                alt={c.alt}
+                variant="card"
+                cover
+                priority={priority}
+              />
+            </div>
+            {c.caption && (
+              <figcaption style={{ fontSize: ".9rem", opacity: 0.8, marginTop: 8 }}>
+                {c.caption}
+              </figcaption>
+            )}
+          </>
+        );
 
-          return (
-            <li key={item.id ?? idx}>
-              {onItemClick ? (
-                <button
-                  type="button"
-                  aria-label={`Deschide ${typeof item.caption === "string" ? item.caption : "cardul"}`}
-                  onClick={() => onItemClick(idx, item)}
-                  style={{ all: "unset", cursor: "pointer", display: "block", width: "100%" }}
-                >
-                  {cardEl}
-                </button>
-              ) : (
-                cardEl
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+        return (
+          <figure key={c.src + i} style={{ margin: 0 }}>
+            {onItemClick ? (
+              <button
+                type="button"
+                onClick={() => handleClick(i)}
+                style={{
+                  padding: 0,
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  textAlign: "inherit",
+                  width: "100%",
+                }}
+                aria-label={`Deschide imaginea: ${c.alt}`}
+              >
+                {body}
+              </button>
+            ) : c.href ? (
+              <a href={c.href} style={{ display: "block", textDecoration: "none", color: "inherit" }}>
+                {body}
+              </a>
+            ) : (
+              body
+            )}
+          </figure>
+        );
+      })}
+    </Grid>
   );
-};
-
-export default CardGrid;
+}
