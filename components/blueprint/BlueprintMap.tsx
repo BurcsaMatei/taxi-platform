@@ -11,6 +11,7 @@ import type { BlueprintDistrict } from "../../lib/blueprint.districts";
 import { BLUEPRINT_DISTRICTS } from "../../lib/blueprint.districts";
 import * as hudSp from "../../styles/blueprint/blueprintDistrictHud.css";
 import * as sp from "../../styles/blueprint/blueprintMap.css";
+import { mq } from "../../styles/theme.css";
 import SmartLink from "../SmartLink";
 import BlueprintMiniMap from "./BlueprintMiniMap";
 
@@ -71,21 +72,44 @@ function usePrefersReducedMotion(): boolean {
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
 
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduced(Boolean(mq.matches));
+    const mqx = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(Boolean(mqx.matches));
 
     update();
 
-    if (typeof mq.addEventListener === "function") {
-      mq.addEventListener("change", update);
-      return () => mq.removeEventListener("change", update);
+    if (typeof mqx.addEventListener === "function") {
+      mqx.addEventListener("change", update);
+      return () => mqx.removeEventListener("change", update);
     }
 
-    mq.addListener(update);
-    return () => mq.removeListener(update);
+    mqx.addListener(update);
+    return () => mqx.removeListener(update);
   }, []);
 
   return reduced;
+}
+
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+
+    const mql = window.matchMedia(query);
+
+    const update = () => setMatches(Boolean(mql.matches));
+    update();
+
+    if (typeof mql.addEventListener === "function") {
+      mql.addEventListener("change", update);
+      return () => mql.removeEventListener("change", update);
+    }
+
+    mql.addListener(update);
+    return () => mql.removeListener(update);
+  }, [query]);
+
+  return matches;
 }
 
 // ==============================
@@ -107,6 +131,9 @@ export default function BlueprintMap() {
   const [headerH, setHeaderH] = useState<number>(0);
 
   const reduceMotion = usePrefersReducedMotion();
+
+  // ✅ minimap doar pe md+ (mobil: dezactivat complet)
+  const isMdUp = useMediaQuery(mq.md);
 
   const zoomRef = useRef(zoom);
   const offsetRef = useRef(offset);
@@ -604,7 +631,7 @@ export default function BlueprintMap() {
         </div>
       </div>
 
-      {/* ✅ Harta (nu mai este acoperită de dock pe desktop) */}
+      {/* ✅ Harta */}
       <div
         ref={stageRef}
         className={`${sp.stage} ${isDragging ? sp.stageGrabbing : ""}`}
@@ -616,20 +643,19 @@ export default function BlueprintMap() {
           <p className={sp.hintText}>Drag: mouse/touch • Zoom: scroll • Teleport: district</p>
         </div>
 
-        {/* Mini-map în colțul dreapta-sus */}
-        <BlueprintMiniMap
-          pois={BLUEPRINT_POIS}
-          districts={BLUEPRINT_DISTRICTS}
-          stageSize={stageSize}
-          offset={offset}
-          zoom={zoom}
-        />
+        {/* ✅ Mini-map: md+ only */}
+        {isMdUp ? (
+          <BlueprintMiniMap
+            pois={BLUEPRINT_POIS}
+            districts={BLUEPRINT_DISTRICTS}
+            stageSize={stageSize}
+            offset={offset}
+            zoom={zoom}
+          />
+        ) : null}
 
         <div className={sp.layer} style={{ transform: layerTransform }}>
-          {/* ✅ hub-uri district (vizibile după teleport) */}
           {BLUEPRINT_DISTRICTS.map(renderDistrictHub)}
-
-          {/* POI-uri */}
           {BLUEPRINT_POIS.map(renderPoi)}
         </div>
 

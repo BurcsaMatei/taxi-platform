@@ -34,7 +34,6 @@ export const root = style({
   position: "relative",
   width: "100%",
 
-  // ✅ eliminăm “zona albă” — mapa ocupă tot viewport-ul rămas (sub header)
   height: "calc(100svh - var(--bp-header-h, 0px))",
   minHeight: 560,
 
@@ -42,25 +41,20 @@ export const root = style({
   borderBottom: `1px solid ${vars.color.border}`,
   overflow: "hidden",
 
-  // mobile: stage full, drawer overlay jos
   display: "block",
 
   "@media": {
-    // desktop/tablet: dock stânga + hartă dreapta (fără suprapunere)
     [mq.md]: {
       display: "grid",
       gridTemplateColumns: `${DOCK_W} 1fr`,
       gap: DOCK_GAP,
       alignItems: "stretch",
       padding: DOCK_GAP,
-      // dock-ul e “lipit de viewport stânga” (în interiorul root-ului full width)
-      // iar harta NU mai stă sub el.
     },
   },
 });
 
 export const stage = style({
-  // mobile: overlay full
   position: "absolute",
   inset: 0,
   cursor: "grab",
@@ -68,7 +62,6 @@ export const stage = style({
   touchAction: "none",
   overscrollBehavior: "none",
 
-  // blueprint background: dots + fine grid
   backgroundImage: `
     radial-gradient(circle at 1px 1px, rgba(127,127,127,0.22) 1px, transparent 0),
     linear-gradient(rgba(127,127,127,0.08) 1px, transparent 1px),
@@ -102,6 +95,9 @@ export const layer = style({
 });
 
 export const hint = style({
+  // ✅ mobile: ascuns (deranjant)
+  display: "none",
+
   position: "absolute",
   top: vars.space.md,
   left: vars.space.md,
@@ -115,6 +111,13 @@ export const hint = style({
   fontSize: vars.typography.size.sm,
   lineHeight: vars.typography.leading.normal,
   opacity: 0.96,
+
+  "@media": {
+    // ✅ md+: vizibil
+    [mq.md]: {
+      display: "block",
+    },
+  },
 });
 
 export const hintTitle = style({
@@ -130,7 +133,6 @@ export const hintText = style({
 
 /** HUD (dock/drawer) */
 export const hud = style({
-  // mobile: bottom drawer overlay
   position: "absolute",
   left: vars.space.md,
   right: vars.space.md,
@@ -142,14 +144,12 @@ export const hud = style({
   boxShadow: vars.shadow.md,
   overflow: "hidden",
 
-  // closed state: doar handle
   maxHeight: 56,
   transform: "translate3d(0, 0, 0)",
   transition: `max-height ${vars.motion.fast} ${vars.motion.easing.standard}`,
 
   "@media": {
     [mq.md]: {
-      // desktop: dock stânga, permanent vizibil
       position: "relative",
       left: "auto",
       right: "auto",
@@ -186,7 +186,6 @@ export const hudInner = style({
   },
 });
 
-// handle (arrow) — mobile only (desktop ascuns)
 export const hudHandle = style({
   appearance: "none",
   border: 0,
@@ -236,7 +235,6 @@ export const hudHandleArrow = style({
   },
 });
 
-// content wrapper (scroll on mobile open + desktop always)
 export const hudContent = style({
   display: "grid",
   gap: vars.space.md,

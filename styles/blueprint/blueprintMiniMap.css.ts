@@ -5,6 +5,8 @@
 // ==============================
 import { style } from "@vanilla-extract/css";
 
+import { vars } from "../theme.css";
+
 // ==============================
 // Classes
 // ==============================
@@ -17,21 +19,23 @@ export const wrap = style({
 });
 
 export const card = style({
-  width: 300,
+  width: 320,
   height: 220,
-  borderRadius: 32,
-  border: "2px solid rgba(0,0,0,0.08)",
+  borderRadius: 16,
+  border: `1px solid ${vars.color.border}`,
+  outline: 0,
   background: "rgba(255,255,255,0.92)",
-  boxShadow: "0 20px 56px rgba(0,0,0,0.12)",
-  backdropFilter: "blur(20px)",
-  padding: 20,
+  boxShadow: "0 10px 28px rgba(0,0,0,0.12)",
+  backdropFilter: "blur(10px)",
+  padding: 0, // ✅ scoate rama
+  overflow: "hidden", // ✅ taie orice “halo” pe colțuri
 });
 
 export const map = style({
   position: "relative",
   width: "100%",
   height: "100%",
-  borderRadius: 24,
+  borderRadius: "inherit", // ✅ identic cu card
   background: "rgba(0,0,0,0.03)",
   overflow: "hidden",
 });
