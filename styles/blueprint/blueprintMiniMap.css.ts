@@ -10,52 +10,52 @@ import { style } from "@vanilla-extract/css";
 // ==============================
 export const wrap = style({
   position: "absolute",
-  top: 14,
-  right: 14,
+  top: 28,
+  right: 28,
   zIndex: 30,
   pointerEvents: "none", // nu fură drag-ul
 });
 
 export const card = style({
-  width: 150,
-  height: 110,
-  borderRadius: 16,
-  border: "1px solid rgba(0,0,0,0.08)",
+  width: 300,
+  height: 220,
+  borderRadius: 32,
+  border: "2px solid rgba(0,0,0,0.08)",
   background: "rgba(255,255,255,0.92)",
-  boxShadow: "0 10px 28px rgba(0,0,0,0.12)",
-  backdropFilter: "blur(10px)",
-  padding: 10,
+  boxShadow: "0 20px 56px rgba(0,0,0,0.12)",
+  backdropFilter: "blur(20px)",
+  padding: 20,
 });
 
 export const map = style({
   position: "relative",
   width: "100%",
   height: "100%",
-  borderRadius: 12,
+  borderRadius: 24,
   background: "rgba(0,0,0,0.03)",
   overflow: "hidden",
 });
 
 export const viewRect = style({
   position: "absolute",
-  borderRadius: 8,
-  border: "2px solid rgba(0, 98, 255, 0.85)",
+  borderRadius: 16,
+  border: "4px solid rgba(0, 98, 255, 0.85)",
   background: "rgba(0, 98, 255, 0.08)",
 });
 
 export const poiDot = style({
   position: "absolute",
-  width: 6,
-  height: 6,
+  width: 12,
+  height: 12,
   borderRadius: 999,
   background: "rgba(0,0,0,0.28)",
 });
 
 export const hubDot = style({
   position: "absolute",
-  width: 8,
-  height: 8,
+  width: 16,
+  height: 16,
   borderRadius: 999,
   background: "rgba(0, 98, 255, 0.85)",
-  boxShadow: "0 0 0 2px rgba(255,255,255,0.9)",
+  boxShadow: "0 0 0 4px rgba(255,255,255,0.9)",
 });

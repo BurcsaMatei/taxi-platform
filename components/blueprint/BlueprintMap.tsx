@@ -100,6 +100,9 @@ export default function BlueprintMap() {
   const [activePoi, setActivePoi] = useState<ActivePoi>(null);
   const [stageSize, setStageSize] = useState<StageSize | null>(null);
 
+  // ✅ HUD drawer (mobile only; desktop ignoră vizual prin CSS)
+  const [isHudOpen, setIsHudOpen] = useState<boolean>(false);
+
   // ✅ pentru “full viewport fără zona albă” calculăm header height
   const [headerH, setHeaderH] = useState<number>(0);
 
@@ -556,6 +559,52 @@ export default function BlueprintMap() {
 
   return (
     <div className={sp.root} style={rootVars}>
+      {/* ✅ Dock (desktop) / Drawer (mobile) */}
+      <div
+        className={`${sp.hud} ${isHudOpen ? sp.hudOpen : ""}`}
+        data-no-drag="true"
+        data-open={isHudOpen ? "true" : "false"}
+      >
+        <div className={sp.hudInner}>
+          <button
+            type="button"
+            className={sp.hudHandle}
+            onClick={() => setIsHudOpen((v) => !v)}
+            aria-label={isHudOpen ? "Închide meniul" : "Deschide meniul"}
+            aria-expanded={isHudOpen}
+          >
+            <span className={sp.hudHandlePill} aria-hidden="true" />
+            <span className={sp.hudHandleArrow} aria-hidden="true" />
+          </button>
+
+          <div className={sp.hudContent}>
+            <button type="button" className={sp.hudBtn} onClick={onResetView}>
+              Reset view
+            </button>
+
+            <div className={sp.hudDistricts}>
+              {BLUEPRINT_DISTRICTS.map((d) => (
+                <div key={d.id} className={hudSp.districtGroup}>
+                  <button
+                    type="button"
+                    className={hudSp.teleportButton}
+                    onClick={() => focusDistrict(d)}
+                    aria-label={`Teleport către ${d.label}`}
+                  >
+                    {d.label}
+                  </button>
+
+                  <SmartLink className={hudSp.openPageLink} href={d.pageHref}>
+                    Open district page
+                  </SmartLink>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ✅ Harta (nu mai este acoperită de dock pe desktop) */}
       <div
         ref={stageRef}
         className={`${sp.stage} ${isDragging ? sp.stageGrabbing : ""}`}
@@ -582,34 +631,6 @@ export default function BlueprintMap() {
 
           {/* POI-uri */}
           {BLUEPRINT_POIS.map(renderPoi)}
-        </div>
-
-        {/* ✅ HUD: stacked */}
-        <div className={sp.hud} data-no-drag="true">
-          <div className={sp.hudInner}>
-            <button type="button" className={sp.hudBtn} onClick={onResetView}>
-              Reset view
-            </button>
-
-            <div className={sp.hudDistricts}>
-              {BLUEPRINT_DISTRICTS.map((d) => (
-                <div key={d.id} className={hudSp.districtGroup}>
-                  <button
-                    type="button"
-                    className={hudSp.teleportButton}
-                    onClick={() => focusDistrict(d)}
-                    aria-label={`Teleport către ${d.label}`}
-                  >
-                    {d.label}
-                  </button>
-
-                  <SmartLink className={hudSp.openPageLink} href={d.pageHref}>
-                    Open district page
-                  </SmartLink>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {activePoi ? (

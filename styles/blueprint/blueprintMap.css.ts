@@ -22,6 +22,12 @@ const poiKindVars: Record<Kind, { accent: string; fill: string }> = {
 };
 
 // ==============================
+// Constante
+// ==============================
+const DOCK_W = "clamp(220px, 22vw, 320px)";
+const DOCK_GAP = vars.space.md;
+
+// ==============================
 // Classes
 // ==============================
 export const root = style({
@@ -35,9 +41,26 @@ export const root = style({
   borderTop: `1px solid ${vars.color.border}`,
   borderBottom: `1px solid ${vars.color.border}`,
   overflow: "hidden",
+
+  // mobile: stage full, drawer overlay jos
+  display: "block",
+
+  "@media": {
+    // desktop/tablet: dock stânga + hartă dreapta (fără suprapunere)
+    [mq.md]: {
+      display: "grid",
+      gridTemplateColumns: `${DOCK_W} 1fr`,
+      gap: DOCK_GAP,
+      alignItems: "stretch",
+      padding: DOCK_GAP,
+      // dock-ul e “lipit de viewport stânga” (în interiorul root-ului full width)
+      // iar harta NU mai stă sub el.
+    },
+  },
 });
 
 export const stage = style({
+  // mobile: overlay full
   position: "absolute",
   inset: 0,
   cursor: "grab",
@@ -53,6 +76,18 @@ export const stage = style({
   `,
   backgroundSize: "20px 20px, 80px 80px, 80px 80px",
   backgroundPosition: "0 0, 0 0, 0 0",
+
+  "@media": {
+    [mq.md]: {
+      position: "relative",
+      inset: "auto",
+      width: "100%",
+      height: "100%",
+      borderRadius: vars.radius.xl,
+      overflow: "hidden",
+      border: `1px solid ${vars.color.border}`,
+    },
+  },
 });
 
 export const stageGrabbing = style({
@@ -93,27 +128,125 @@ export const hintText = style({
   opacity: 0.78,
 });
 
-/** HUD (dock) — stânga viewport-ului */
+/** HUD (dock/drawer) */
 export const hud = style({
+  // mobile: bottom drawer overlay
   position: "absolute",
   left: vars.space.md,
+  right: vars.space.md,
   bottom: vars.space.md,
   zIndex: vars.z.overlay,
   border: `1px solid ${vars.color.border}`,
-  borderRadius: vars.radius.lg,
+  borderRadius: vars.radius.xl,
   background: vars.color.surface,
-  boxShadow: vars.shadow.sm,
-  width: "min(520px, calc(100vw - 32px))",
+  boxShadow: vars.shadow.md,
+  overflow: "hidden",
+
+  // closed state: doar handle
+  maxHeight: 56,
+  transform: "translate3d(0, 0, 0)",
+  transition: `max-height ${vars.motion.fast} ${vars.motion.easing.standard}`,
+
+  "@media": {
+    [mq.md]: {
+      // desktop: dock stânga, permanent vizibil
+      position: "relative",
+      left: "auto",
+      right: "auto",
+      bottom: "auto",
+
+      zIndex: "auto",
+      borderRadius: vars.radius.xl,
+      boxShadow: vars.shadow.sm,
+
+      height: "100%",
+      maxHeight: "none",
+      transition: "none",
+      transform: "none",
+    },
+  },
+});
+
+export const hudOpen = style({
+  maxHeight: "50svh",
 });
 
 export const hudInner = style({
   display: "grid",
-  gap: vars.space.md,
-  padding: `${vars.space.sm} ${vars.space.md}`,
+  gridTemplateRows: "auto 1fr",
+  gap: vars.space.sm,
+  padding: vars.space.sm,
 
   "@media": {
     [mq.md]: {
-      padding: `${vars.space.md} ${vars.space.lg}`,
+      height: "100%",
+      padding: vars.space.md,
+      gap: vars.space.md,
+    },
+  },
+});
+
+// handle (arrow) — mobile only (desktop ascuns)
+export const hudHandle = style({
+  appearance: "none",
+  border: 0,
+  background: "transparent",
+  cursor: "pointer",
+  width: "100%",
+  height: 40,
+  display: "grid",
+  placeItems: "center",
+  padding: 0,
+
+  selectors: {
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: 2,
+      borderRadius: vars.radius.lg,
+    },
+  },
+
+  "@media": {
+    [mq.md]: {
+      display: "none",
+    },
+  },
+});
+
+export const hudHandlePill = style({
+  width: 56,
+  height: 6,
+  borderRadius: 999,
+  background: "rgba(127,127,127,0.28)",
+});
+
+export const hudHandleArrow = style({
+  width: 10,
+  height: 10,
+  marginTop: 8,
+  borderRight: "2px solid rgba(0,0,0,0.6)",
+  borderBottom: "2px solid rgba(0,0,0,0.6)",
+  transform: "rotate(45deg)",
+  transition: `transform ${vars.motion.fast} ${vars.motion.easing.standard}`,
+
+  selectors: {
+    [`${hudOpen} &`]: {
+      transform: "rotate(225deg)",
+    },
+  },
+});
+
+// content wrapper (scroll on mobile open + desktop always)
+export const hudContent = style({
+  display: "grid",
+  gap: vars.space.md,
+  overflow: "auto",
+  paddingBottom: vars.space.sm,
+
+  "@media": {
+    [mq.md]: {
+      overflow: "auto",
+      paddingBottom: 0,
     },
   },
 });
