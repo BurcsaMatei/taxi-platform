@@ -142,16 +142,26 @@ export const districtHub = style({
 });
 
 export const districtHubLink = style({
+  // ✅ now used by a <button>, not <a>
+  appearance: "none",
+  padding: 0,
+  margin: 0,
+  textAlign: "left",
+  font: "inherit",
+
   width: "100%",
   height: "100%",
   display: "block",
   position: "relative",
+
   border: `1px solid ${vars.color.border}`,
   borderRadius: vars.radius.xl,
   background: "rgba(127,127,127,0.06)",
   boxShadow: vars.shadow.sm,
-  textDecoration: "none",
+
   color: "inherit",
+  cursor: "pointer",
+
   overflow: "hidden",
   transition: `transform ${vars.motion.fast} ${vars.motion.easing.standard}, box-shadow ${vars.motion.fast} ${vars.motion.easing.standard}`,
 

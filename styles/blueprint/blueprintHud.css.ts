@@ -268,6 +268,23 @@ export const accItem = style({
   gap: vars.space.sm,
 });
 
+export const accItemButton = style({
+  appearance: "none",
+  border: 0,
+  padding: 0,
+  margin: 0,
+  background: "transparent",
+  textAlign: "left",
+  cursor: "pointer",
+  selectors: {
+    "&:focus-visible": {
+      outline: `2px solid ${vars.color.focus}`,
+      outlineOffset: 2,
+      borderRadius: vars.radius.lg,
+    },
+  },
+});
+
 export const accItemMain = style({
   display: "grid",
   gap: 2,

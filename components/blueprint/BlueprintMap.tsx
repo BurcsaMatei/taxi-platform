@@ -5,14 +5,15 @@
 // ==============================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { getAllPosts } from "../../lib/blogData";
 import type { BlueprintDistrict, BlueprintDistrictId } from "../../lib/blueprintdata/districts";
 import { BLUEPRINT_DISTRICTS } from "../../lib/blueprintdata/districts";
+import type { BlueprintDistrictPanelItem } from "../../lib/blueprintdata/panels";
 import { BLUEPRINT_PANELS } from "../../lib/blueprintdata/panels";
 import type { BlueprintPoi } from "../../lib/blueprintdata/pois";
 import { BLUEPRINT_POIS } from "../../lib/blueprintdata/pois";
 import * as sp from "../../styles/blueprint/blueprintMap.css";
 import { mq } from "../../styles/theme.css";
-import SmartLink from "../SmartLink";
 import BlueprintHud from "./BlueprintHud";
 import BlueprintMiniMap from "./BlueprintMiniMap";
 import BlueprintPanel from "./BlueprintPanel";
@@ -114,6 +115,10 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
+function blogHrefForSlug(slug: string): string {
+  return `/blog/${slug}`;
+}
+
 // ==============================
 // Component
 // ==============================
@@ -129,8 +134,9 @@ export default function BlueprintMap() {
   // ✅ HUD drawer (mobile only; desktop ignoră vizual prin CSS)
   const [isHudOpen, setIsHudOpen] = useState<boolean>(false);
 
-  // ✅ District panel (info-only, in-map)
+  // ✅ In-map panel state
   const [activeDistrictId, setActiveDistrictId] = useState<BlueprintDistrictId | null>(null);
+  const [activePanelItemId, setActivePanelItemId] = useState<string | null>(null);
 
   // ✅ pentru “full viewport fără zona albă” calculăm header height
   const [headerH, setHeaderH] = useState<number>(0);
@@ -324,14 +330,29 @@ export default function BlueprintMap() {
     hasCenteredRef.current = true;
   }, []);
 
-  // ESC closes modal
+  // ESC closes modal / panel detail
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActivePoi(null);
+      if (e.key !== "Escape") return;
+
+      if (activePoi) {
+        setActivePoi(null);
+        return;
+      }
+
+      if (activePanelItemId) {
+        setActivePanelItemId(null);
+        return;
+      }
+
+      if (activeDistrictId) {
+        setActiveDistrictId(null);
+      }
     };
+
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [activeDistrictId, activePanelItemId, activePoi]);
 
   // WASD / arrows movement loop (global, nu depinde de focus)
   useEffect(() => {
@@ -456,6 +477,10 @@ export default function BlueprintMap() {
     const onWheel = (e: WheelEvent) => {
       cancelCameraAnim();
 
+      // ✅ dacă scroll-ul vine din HUD/Panel/Modal (data-no-drag / element interactiv),
+      // lăsăm browser-ul să facă scroll normal (fără zoom în hartă)
+      if (isNoDragTarget(e.target)) return;
+
       e.preventDefault();
 
       const rect = el.getBoundingClientRect();
@@ -551,7 +576,7 @@ export default function BlueprintMap() {
     );
   };
 
-  // ✅ District hubs (clădiri) — ca să nu “teleportezi în gol”
+  // ✅ District hubs (clădiri)
   const renderDistrictHub = (d: BlueprintDistrict) => {
     const vars: CssVars = {
       "--hub-x": `${d.x}px`,
@@ -560,10 +585,11 @@ export default function BlueprintMap() {
 
     return (
       <div key={`hub-${d.id}`} className={sp.districtHub} style={vars}>
-        <SmartLink
+        <button
+          type="button"
           className={sp.districtHubLink}
-          href={d.pageHref}
-          aria-label={`Deschide ${d.label}`}
+          onClick={() => onOpenDistrictPanel(d.id)}
+          aria-label={`Deschide panel pentru ${d.label}`}
         >
           <span className={sp.districtHubRoof} aria-hidden="true" />
           <span className={sp.districtHubBody} aria-hidden="true" />
@@ -575,19 +601,30 @@ export default function BlueprintMap() {
 
           <span className={sp.districtHubLabel}>
             <span className={sp.districtHubTitle}>{d.label}</span>
-            <span className={sp.districtHubHint}>Open district page</span>
+            <span className={sp.districtHubHint}>Open district panel</span>
           </span>
-        </SmartLink>
+        </button>
       </div>
     );
   };
 
   const onOpenDistrictPanel = (districtId: BlueprintDistrictId) => {
     setActiveDistrictId(districtId);
+    setActivePanelItemId(null);
   };
 
   const onCloseDistrictPanel = () => {
+    setActivePanelItemId(null);
     setActiveDistrictId(null);
+  };
+
+  const onOpenPanelItem = (districtId: BlueprintDistrictId, itemId: string) => {
+    setActiveDistrictId(districtId);
+    setActivePanelItemId(itemId);
+  };
+
+  const onBackToPanelList = () => {
+    setActivePanelItemId(null);
   };
 
   const onTeleport = (districtId: BlueprintDistrictId) => {
@@ -596,6 +633,18 @@ export default function BlueprintMap() {
     focusDistrict(d);
   };
 
+  // ✅ Blog items din data reală (pentru HUD + Panel)
+  const blogItems = useMemo<readonly BlueprintDistrictPanelItem[]>(() => {
+    const posts = getAllPosts();
+    return posts.map((p) => ({
+      id: `blog-${p.slug}`,
+      title: p.title,
+      description: p.excerpt,
+      externalHref: "",
+      internalHref: blogHrefForSlug(p.slug),
+    }));
+  }, []);
+
   const modalTitleId = activePoi ? `poi-title-${activePoi.id}` : undefined;
   const modalDescId = activePoi ? `poi-desc-${activePoi.id}` : undefined;
 
@@ -603,7 +652,8 @@ export default function BlueprintMap() {
     "--bp-header-h": `${headerH}px`,
   };
 
-  const activePanel = activeDistrictId ? BLUEPRINT_PANELS[activeDistrictId] : null;
+  const basePanel = activeDistrictId ? BLUEPRINT_PANELS[activeDistrictId] : null;
+  const panelItemsOverride = activeDistrictId === "blog" ? blogItems : (basePanel?.items ?? null);
 
   return (
     <div className={sp.root} style={rootVars}>
@@ -615,6 +665,7 @@ export default function BlueprintMap() {
         onResetView={onResetView}
         onTeleport={onTeleport}
         onOpenDistrictPanel={onOpenDistrictPanel}
+        onOpenPanelItem={onOpenPanelItem}
       />
 
       {/* ✅ Harta */}
@@ -640,11 +691,15 @@ export default function BlueprintMap() {
           />
         ) : null}
 
-        {/* ✅ Panel (in-map, info-only) */}
-        {activeDistrictId && activePanel ? (
+        {/* ✅ Panel (in-map) */}
+        {activeDistrictId && basePanel ? (
           <BlueprintPanel
             districtId={activeDistrictId}
-            panel={activePanel}
+            panel={basePanel}
+            itemsOverride={panelItemsOverride}
+            activeItemId={activePanelItemId}
+            onSelectItem={(id) => onOpenPanelItem(activeDistrictId, id)}
+            onBack={onBackToPanelList}
             onClose={onCloseDistrictPanel}
           />
         ) : null}
@@ -688,9 +743,14 @@ export default function BlueprintMap() {
               </p>
 
               <div className={sp.modalActions}>
-                <SmartLink className={sp.modalAction} href={activePoi.href} newTab>
+                <a
+                  className={sp.modalAction}
+                  href={activePoi.href}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Deschide site
-                </SmartLink>
+                </a>
               </div>
             </div>
           </div>
