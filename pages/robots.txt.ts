@@ -5,9 +5,10 @@
 // ==============================
 import type { GetServerSideProps } from "next";
 
-import { SITEMAPS } from "../lib/config";
 import { parseEnvBool } from "../lib/env";
 import { getRequestBaseUrl, joinHostPath } from "../lib/url";
+
+const SITEMAPS = ["/sitemap.xml"];
 
 // ==============================
 // Utils

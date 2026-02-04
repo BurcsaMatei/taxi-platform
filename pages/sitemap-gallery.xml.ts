@@ -5,7 +5,9 @@
 // ==============================
 import type { GetServerSideProps } from "next";
 
-import { absoluteAssetUrl, GALLERY_ATTACH_LIMIT } from "../lib/config";
+import { absoluteAssetUrl } from "../lib/config";
+
+const GALLERY_ATTACH_LIMIT = 1000;
 import { getGalleryItems } from "../lib/gallery";
 import { getRequestBaseUrl, joinHostPath } from "../lib/url";
 

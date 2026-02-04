@@ -5,15 +5,17 @@
 // ==============================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { BlueprintPoi } from "../../lib/blueprint.data";
-import { BLUEPRINT_POIS } from "../../lib/blueprint.data";
-import type { BlueprintDistrict } from "../../lib/blueprint.districts";
-import { BLUEPRINT_DISTRICTS } from "../../lib/blueprint.districts";
-import * as hudSp from "../../styles/blueprint/blueprintDistrictHud.css";
+import type { BlueprintDistrict, BlueprintDistrictId } from "../../lib/blueprintdata/districts";
+import { BLUEPRINT_DISTRICTS } from "../../lib/blueprintdata/districts";
+import { BLUEPRINT_PANELS } from "../../lib/blueprintdata/panels";
+import type { BlueprintPoi } from "../../lib/blueprintdata/pois";
+import { BLUEPRINT_POIS } from "../../lib/blueprintdata/pois";
 import * as sp from "../../styles/blueprint/blueprintMap.css";
 import { mq } from "../../styles/theme.css";
 import SmartLink from "../SmartLink";
+import BlueprintHud from "./BlueprintHud";
 import BlueprintMiniMap from "./BlueprintMiniMap";
+import BlueprintPanel from "./BlueprintPanel";
 
 // ==============================
 // Types
@@ -126,6 +128,9 @@ export default function BlueprintMap() {
 
   // ✅ HUD drawer (mobile only; desktop ignoră vizual prin CSS)
   const [isHudOpen, setIsHudOpen] = useState<boolean>(false);
+
+  // ✅ District panel (info-only, in-map)
+  const [activeDistrictId, setActiveDistrictId] = useState<BlueprintDistrictId | null>(null);
 
   // ✅ pentru “full viewport fără zona albă” calculăm header height
   const [headerH, setHeaderH] = useState<number>(0);
@@ -577,6 +582,20 @@ export default function BlueprintMap() {
     );
   };
 
+  const onOpenDistrictPanel = (districtId: BlueprintDistrictId) => {
+    setActiveDistrictId(districtId);
+  };
+
+  const onCloseDistrictPanel = () => {
+    setActiveDistrictId(null);
+  };
+
+  const onTeleport = (districtId: BlueprintDistrictId) => {
+    const d = BLUEPRINT_DISTRICTS.find((x) => x.id === districtId);
+    if (!d) return;
+    focusDistrict(d);
+  };
+
   const modalTitleId = activePoi ? `poi-title-${activePoi.id}` : undefined;
   const modalDescId = activePoi ? `poi-desc-${activePoi.id}` : undefined;
 
@@ -584,52 +603,19 @@ export default function BlueprintMap() {
     "--bp-header-h": `${headerH}px`,
   };
 
+  const activePanel = activeDistrictId ? BLUEPRINT_PANELS[activeDistrictId] : null;
+
   return (
     <div className={sp.root} style={rootVars}>
-      {/* ✅ Dock (desktop) / Drawer (mobile) */}
-      <div
-        className={`${sp.hud} ${isHudOpen ? sp.hudOpen : ""}`}
-        data-no-drag="true"
-        data-open={isHudOpen ? "true" : "false"}
-      >
-        <div className={sp.hudInner}>
-          <button
-            type="button"
-            className={sp.hudHandle}
-            onClick={() => setIsHudOpen((v) => !v)}
-            aria-label={isHudOpen ? "Închide meniul" : "Deschide meniul"}
-            aria-expanded={isHudOpen}
-          >
-            <span className={sp.hudHandlePill} aria-hidden="true" />
-            <span className={sp.hudHandleArrow} aria-hidden="true" />
-          </button>
-
-          <div className={sp.hudContent}>
-            <button type="button" className={sp.hudBtn} onClick={onResetView}>
-              Reset view
-            </button>
-
-            <div className={sp.hudDistricts}>
-              {BLUEPRINT_DISTRICTS.map((d) => (
-                <div key={d.id} className={hudSp.districtGroup}>
-                  <button
-                    type="button"
-                    className={hudSp.teleportButton}
-                    onClick={() => focusDistrict(d)}
-                    aria-label={`Teleport către ${d.label}`}
-                  >
-                    {d.label}
-                  </button>
-
-                  <SmartLink className={hudSp.openPageLink} href={d.pageHref}>
-                    Open district page
-                  </SmartLink>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* ✅ HUD (dock desktop / drawer mobile) */}
+      <BlueprintHud
+        isOpen={isHudOpen}
+        onToggleOpen={() => setIsHudOpen((v) => !v)}
+        districts={BLUEPRINT_DISTRICTS}
+        onResetView={onResetView}
+        onTeleport={onTeleport}
+        onOpenDistrictPanel={onOpenDistrictPanel}
+      />
 
       {/* ✅ Harta */}
       <div
@@ -651,6 +637,15 @@ export default function BlueprintMap() {
             stageSize={stageSize}
             offset={offset}
             zoom={zoom}
+          />
+        ) : null}
+
+        {/* ✅ Panel (in-map, info-only) */}
+        {activeDistrictId && activePanel ? (
+          <BlueprintPanel
+            districtId={activeDistrictId}
+            panel={activePanel}
+            onClose={onCloseDistrictPanel}
           />
         ) : null}
 

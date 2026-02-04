@@ -81,10 +81,10 @@ function isQueryOrHash(path: string): boolean {
 // ==============================
 const RAW_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 const PREFER_TRAILING = /\/$/.test(RAW_SITE_URL ?? "");
-const SITE_URL = normalizeUrl(RAW_SITE_URL, { requireProtocol: true });
+const SITE_URL_NORMALIZED = normalizeUrl(RAW_SITE_URL, { requireProtocol: true });
 
 export const SITE = {
-  url: SITE_URL,
+  url: SITE_URL_NORMALIZED,
   name: (process.env.NEXT_PUBLIC_SITE_NAME || "").trim(),
   titleTemplate: (process.env.NEXT_PUBLIC_SITE_TITLE_TEMPLATE || "").trim(),
   defaultTitle: (process.env.NEXT_PUBLIC_DEFAULT_TITLE || "").trim(),
@@ -247,33 +247,42 @@ export const SEO_DEFAULTS = {
 } as const;
 
 // ==============================
-// Sitemap / Routes / Limits
+// Site URL (absolute)
 // ==============================
-export const SITEMAPS = [
-  "/sitemap.xml", // index
-  "/sitemap-pages.xml", // pagini non-blog
-  "/sitemap-posts.xml", // articole blog
-  "/sitemap-gallery.xml", // galerie
-] as const;
+const RAW_ENV_SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "").trim();
 
-// ✅ include district pages + pagini top-level existente
-export const STATIC_ROUTES = [
-  "/",
-  "/concept",
-  "/portfolio",
-  "/marketplace",
-  "/auctions",
-  "/services",
-  "/contact",
-  "/galerie",
-  "/blog",
-  "/cookie-policy",
-] as const;
+// fallback solid în dev dacă env e gol / invalid
+const DEV_FALLBACK = "http://localhost:3000";
 
-export const GALLERY_ATTACH_LIMIT = 100 as const;
+function normalizeSiteUrl(input: string): string {
+  const v = input.trim().replace(/\/+$/, "");
+  if (!v) return "";
+  try {
+    const u = new URL(v);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return "";
+    return u.toString().replace(/\/+$/, "");
+  } catch {
+    return "";
+  }
+}
 
-// ==============================
-// Compat exporturi
-// ==============================
-export const seoDefaults = SEO_DEFAULTS;
-export { SITE_URL };
+const NORMALIZED = normalizeSiteUrl(RAW_ENV_SITE_URL);
+
+// ✅ export public stabil
+export const SITE_URL = NORMALIZED || (process.env.NODE_ENV !== "production" ? DEV_FALLBACK : "");
+
+// ✅ în prod NU acceptăm gol
+if (process.env.NODE_ENV === "production" && !SITE_URL) {
+  throw new Error("[config.ts] SITE.url este gol — nu pot construi URL absolut.");
+}
+
+// ✅ în dev doar warning (fără 500)
+if (process.env.NODE_ENV !== "production" && !NORMALIZED) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    "[config.ts] NEXT_PUBLIC_SITE_URL este gol/invalid. Folosesc fallback:",
+    DEV_FALLBACK,
+  );
+}
+
+export const SITEMAPS = ["/sitemap.xml", "/sitemap-posts.xml"]; // Add other sitemap paths as needed

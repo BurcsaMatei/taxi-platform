@@ -19,7 +19,7 @@ import Outro from "../components/sections/Outro";
 import Seo from "../components/Seo";
 import Separator from "../components/Separator";
 import type { Json } from "../interfaces";
-import { absoluteAssetUrl, absoluteUrl, seoDefaults } from "../lib/config";
+import { absoluteAssetUrl, absoluteUrl, SEO_DEFAULTS } from "../lib/config";
 import { getGalleryItems } from "../lib/gallery";
 
 // ==============================
@@ -196,7 +196,7 @@ function GaleriePage() {
     <>
       <Seo
         title="Galerie"
-        description={seoDefaults.description}
+        description={SEO_DEFAULTS.description}
         image="/images/og-gallery.jpg"
         url="/galerie"
         structuredData={[breadcrumbList, imageGalleryLd]}

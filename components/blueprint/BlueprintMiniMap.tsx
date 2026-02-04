@@ -5,7 +5,7 @@
 // ==============================
 import * as React from "react";
 
-import { BLUEPRINT_DISTRICTS } from "../../lib/blueprint.districts";
+import { BLUEPRINT_DISTRICTS } from "../../lib/blueprintdata/districts";
 import * as s from "../../styles/blueprint/blueprintMiniMap.css";
 
 // ==============================

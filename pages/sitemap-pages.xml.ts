@@ -5,7 +5,6 @@
 // ==============================
 import type { GetServerSideProps } from "next";
 
-import { STATIC_ROUTES } from "../lib/config";
 import { getRequestBaseUrl, joinHostPath } from "../lib/url";
 
 // ==============================
@@ -67,3 +66,5 @@ export const getServerSideProps: GetServerSideProps = async ({ res, req }) => {
 
   return { props: {} };
 };
+
+const STATIC_ROUTES = ["/", "/blog", "/about"]; // Add your actual static routes here

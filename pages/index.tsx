@@ -8,7 +8,7 @@ import type { NextPage } from "next";
 import BlueprintMap from "../components/blueprint/BlueprintMap";
 import Seo from "../components/Seo";
 import type { Json } from "../interfaces";
-import { absoluteUrl, seoDefaults } from "../lib/config";
+import { absoluteUrl, SEO_DEFAULTS } from "../lib/config";
 
 // ==============================
 // Constante
@@ -29,9 +29,9 @@ const Home: NextPage = () => {
     <>
       <Seo
         title="KonceptID"
-        description={seoDefaults.description}
+        description={SEO_DEFAULTS.description}
         url="/"
-        image={seoDefaults.ogImage}
+        image={SEO_DEFAULTS.ogImage}
         structuredData={[breadcrumbList]}
       />
 

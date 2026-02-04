@@ -8,7 +8,7 @@ import type { NextPage } from "next";
 import Seo from "../components/Seo";
 import Separator from "../components/Separator";
 import type { Json } from "../interfaces";
-import { absoluteUrl, seoDefaults } from "../lib/config";
+import { absoluteUrl, SEO_DEFAULTS } from "../lib/config";
 
 // ==============================
 // Constante
@@ -30,9 +30,9 @@ const MarketplacePage: NextPage = () => {
     <>
       <Seo
         title="Marketplace"
-        description={seoDefaults.description}
+        description={SEO_DEFAULTS.description}
         url="/marketplace"
-        image={seoDefaults.ogImage}
+        image={SEO_DEFAULTS.ogImage}
         structuredData={[breadcrumbList]}
       />
 
