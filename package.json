@@ -3,7 +3,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm run gallery:build",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
@@ -17,7 +16,6 @@
     "docs:export:components": "node scripts/export-components-combined.mjs",
     "docs:site": "node scripts/build-docsite.mjs",
     "preview": "next dev -p 3002",
-    "gallery:build": "node scripts/build-gallery.mjs",
     "rss:build": "tsx scripts/build-rss.ts",
     "postbuild": "npm run rss:build",
     "check:all": "npm run typecheck && npm run lint"
@@ -30,7 +28,6 @@
     "next-pwa": "^5.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "yet-another-react-lightbox": "^3.25.0",
     "zod": "^4.0.17"
   },
   "devDependencies": {

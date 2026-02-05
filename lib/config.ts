@@ -278,30 +278,23 @@ export const SEO_DEFAULTS = {
 } as const;
 
 // ==============================
-// Sitemap / Routes / Limits
+// Sitemap / Routes
 // ==============================
 export const SITEMAPS = [
   "/sitemap.xml", // index
   "/sitemap-pages.xml", // pagini non-blog
   "/sitemap-posts.xml", // articole blog
-  "/sitemap-gallery.xml", // galerie
 ] as const;
 
-// ✅ include district pages + pagini top-level existente
 export const STATIC_ROUTES = [
   "/",
   "/concept",
   "/portfolio",
   "/marketplace",
   "/auctions",
-  "/services",
-  "/contact",
-  "/galerie",
   "/blog",
   "/cookie-policy",
 ] as const;
-
-export const GALLERY_ATTACH_LIMIT = 100 as const;
 
 // ==============================
 // Compat exporturi

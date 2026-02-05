@@ -147,7 +147,7 @@ const BlogIndex: NextPage<Props> = ({ posts }) => {
                 eyebrow="Vrei să intri în contact direct cu noi?"
                 title="Hai să discutăm proiectul tău"
                 lead="Spune-ne ce ai în minte și revenim rapid cu pașii următori."
-                cta={{ label: "Contact", href: "/contact" }}
+                cta={{ label: "Concept", href: "/concept" }}
               />
             </Appear>
           </div>

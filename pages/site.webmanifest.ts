@@ -6,7 +6,6 @@
 import type { GetServerSideProps } from "next";
 
 import { SITE, THEME, withBase } from "../lib/config";
-import { getRequestBaseUrl } from "../lib/url";
 
 // ==============================
 // Types
@@ -106,15 +105,24 @@ export const getServerSideProps: GetServerSideProps = async ({ res, req }) => {
     return { props: {} };
   }
 
-  const host = getRequestBaseUrl(req);
+  const host =
+    typeof req?.headers?.host === "string" && req.headers.host.length > 0
+      ? `${req.headers["x-forwarded-proto"] === "https" ? "https" : "http"}://${req.headers.host}`
+      : "";
 
   // ID stabil: absolut (host + basePath)
-  const appId = `${host}${withBase("/")}`;
+  const appId = host ? `${host}${withBase("/")}` : withBase("/");
 
   // Share Target doar dacă este activat explicit (și ai handler)
   const SHARE_TARGET_ENABLED = /^(1|true|yes|y)$/i.test(
     (process.env.NEXT_PUBLIC_SHARE_TARGET_ENABLED || "").trim(),
   );
+
+  const shortcutIcon = {
+    src: withBase("/icons/shortcut-blog.png"),
+    sizes: "96x96",
+    type: "image/png",
+  };
 
   const manifest: WebAppManifest = {
     id: appId,
@@ -170,31 +178,22 @@ export const getServerSideProps: GetServerSideProps = async ({ res, req }) => {
       { src: withBase("/icons/apple-touch-icon.png"), sizes: "180x180", type: "image/png" },
     ],
 
+    // ✅ doar rute existente
     shortcuts: [
-      {
-        name: "Galerie",
-        short_name: "Galerie",
-        description: "Deschide galeria de imagini.",
-        url: withBase("/galerie"),
-        icons: [
-          { src: withBase("/icons/shortcut-gallery.png"), sizes: "96x96", type: "image/png" },
-        ],
-      },
       {
         name: "Blog",
         short_name: "Blog",
         description: "Ultimele articole publicate.",
         url: withBase("/blog"),
-        icons: [{ src: withBase("/icons/shortcut-blog.png"), sizes: "96x96", type: "image/png" }],
+        icons: [shortcutIcon],
       },
       {
-        name: "Contact",
-        short_name: "Contact",
-        description: "Contactează-ne rapid.",
-        url: withBase("/contact"),
-        icons: [
-          { src: withBase("/icons/shortcut-contact.png"), sizes: "96x96", type: "image/png" },
-        ],
+        name: "Portfolio",
+        short_name: "Portfolio",
+        description: "Vezi portofoliul și proiectele.",
+        url: withBase("/portfolio"),
+        // Notă: dacă vrei icon dedicat, adaugă /icons/shortcut-portfolio.png și schimbă src aici.
+        icons: [shortcutIcon],
       },
     ],
 
@@ -236,4 +235,3 @@ export const getServerSideProps: GetServerSideProps = async ({ res, req }) => {
 
   return { props: {} };
 };
-// pages/site.webmanifest.ts

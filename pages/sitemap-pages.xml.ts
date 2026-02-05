@@ -5,6 +5,7 @@
 // ==============================
 import type { GetServerSideProps } from "next";
 
+import { STATIC_ROUTES } from "../lib/config";
 import { getRequestBaseUrl, joinHostPath } from "../lib/url";
 
 // ==============================
@@ -29,13 +30,25 @@ const urlEntry = (loc: string, lastmod: string, changefreq: ChangeFreq, priority
     <priority>${priority}</priority>
   </url>`;
 
+function priorityFor(path: (typeof STATIC_ROUTES)[number]): string {
+  if (path === "/") return "1.0";
+  if (path === "/blog") return "0.8";
+  if (path === "/portfolio") return "0.75";
+  if (path === "/concept") return "0.75";
+  return "0.7";
+}
+
+function changeFreqFor(path: (typeof STATIC_ROUTES)[number]): ChangeFreq {
+  if (path === "/blog") return "weekly";
+  return "monthly";
+}
+
 function generate(baseUrl: string): string {
   const nowIso = new Date().toISOString();
 
   const urls = STATIC_ROUTES.map((path) => {
-    const priority = path === "/" ? "1.0" : path === "/blog" ? "0.8" : "0.7";
     const loc = joinHostPath(baseUrl, path);
-    return urlEntry(loc, nowIso, "weekly", priority);
+    return urlEntry(loc, nowIso, changeFreqFor(path), priorityFor(path));
   }).join("");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -47,7 +60,6 @@ ${urls}
 // ==============================
 // Component
 // ==============================
-// Acest fișier generează un sitemap pentru paginile statice ale site-ului.
 export default function SiteMapPages() {
   return null;
 }
@@ -66,5 +78,3 @@ export const getServerSideProps: GetServerSideProps = async ({ res, req }) => {
 
   return { props: {} };
 };
-
-const STATIC_ROUTES = ["/", "/blog", "/about"]; // Add your actual static routes here
