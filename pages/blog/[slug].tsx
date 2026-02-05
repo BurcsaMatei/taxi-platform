@@ -8,7 +8,6 @@ import type { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import Appear from "../../components/animations/Appear";
 import RelatedPosts from "../../components/blog/RelatedPosts";
 import Breadcrumbs from "../../components/Breadcrumbs";
-import IntroSection from "../../components/sections/IntroSection";
 import Seo from "../../components/Seo";
 import Img from "../../components/ui/Img";
 import { getAllPosts, getPostBySlug } from "../../lib/blogData";
@@ -111,11 +110,14 @@ const BlogPostPage: NextPage<Props> = ({ post, related }) => {
         ]}
       />
 
-      {/* Intro aliniat și animat */}
+      {/* Header simplu (fără IntroSection) */}
       <section className="section">
         <div className="container">
           <Appear>
-            <IntroSection eyebrow="Articol" title={post.title} lede={lede} />
+            <header>
+              <h1>{post.title}</h1>
+              <p>{lede}</p>
+            </header>
           </Appear>
         </div>
       </section>

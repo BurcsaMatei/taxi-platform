@@ -5,14 +5,11 @@
 // ==============================
 import type { GetStaticProps, NextPage } from "next";
 
-import Appear, { AppearGroup } from "../../components/animations/Appear";
+import Appear from "../../components/animations/Appear";
 import BlogCard from "../../components/blog/BlogCard";
 import Breadcrumbs from "../../components/Breadcrumbs";
 import Grid from "../../components/Grid";
 import Hero from "../../components/sections/Hero";
-import IntroSection from "../../components/sections/IntroSection";
-import MotivationCards from "../../components/sections/MotivationCards";
-import Outro from "../../components/sections/Outro";
 import Seo from "../../components/Seo";
 import Separator from "../../components/Separator";
 import type { Json } from "../../interfaces";
@@ -74,85 +71,18 @@ const BlogIndex: NextPage<Props> = ({ posts }) => {
 
       <Separator />
 
-      {/* Grupăm secțiunile următoare pentru intrare pe rând */}
-      <AppearGroup stagger={0.12} delay={0.06} amount={0.2}>
-        {/* Intro */}
-        <section className="section">
-          <div className="container">
-            <Appear>
-              <IntroSection
-                eyebrow="Articole"
-                title="Noutăți, sfaturi și resurse"
-                lede="Selectăm idei care te ajută să iei decizii mai bune pentru site-ul tău: performanță, UX, SEO și arhitectură."
-                maxWidth="narrow"
-              />
-            </Appear>
-          </div>
-        </section>
-
-        <Separator />
-
-        {/* Grid articole */}
-        <section className="section">
-          <div className="container">
-            {/* Lăsăm containerul grilei neschimbat; animăm cardurile individual */}
-            <Grid mobileCols={2} desktopCols={4} gap="16px" align="stretch" justify="stretch">
-              {posts.map((post, i) => (
-                <Appear as="div" key={post.slug} style={{ height: "100%" }} delay={0.1 * i}>
-                  <BlogCard post={post} />
-                </Appear>
-              ))}
-            </Grid>
-          </div>
-        </section>
-
-        <Separator />
-
-        {/* Motivation + Outro */}
-        <section className="section">
-          <div className="container">
-            <Appear>
-              <MotivationCards
-                items={[
-                  {
-                    title: "Procesul nostru",
-                    points: ["Brief & plan clar", "Sprinturi transparente", "QA riguros"],
-                  },
-                  {
-                    title: "Consultanță & PR",
-                    points: ["Arhitectură & strategie", "SEO & performanță", "Mentorat tehnic"],
-                  },
-                  {
-                    title: "Clienți mulțumiți",
-                    points: ["SLA răspuns rapid", "Tracking transparent", "Îmbunătățiri continue"],
-                  },
-                  {
-                    title: "Suport maxim",
-                    points: [
-                      "Monitorizare post-lansare",
-                      "Patch-uri rapide",
-                      "Optimizări periodice",
-                    ],
-                  },
-                ]}
-              />
-            </Appear>
-          </div>
-        </section>
-
-        <section className="section">
-          <div className="container">
-            <Appear>
-              <Outro
-                eyebrow="Vrei să intri în contact direct cu noi?"
-                title="Hai să discutăm proiectul tău"
-                lead="Spune-ne ce ai în minte și revenim rapid cu pașii următori."
-                cta={{ label: "Concept", href: "/concept" }}
-              />
-            </Appear>
-          </div>
-        </section>
-      </AppearGroup>
+      {/* Grid articole */}
+      <section className="section">
+        <div className="container">
+          <Grid mobileCols={2} desktopCols={4} gap="16px" align="stretch" justify="stretch">
+            {posts.map((post, i) => (
+              <Appear as="div" key={post.slug} style={{ height: "100%" }} delay={0.08 * i}>
+                <BlogCard post={post} />
+              </Appear>
+            ))}
+          </Grid>
+        </div>
+      </section>
     </>
   );
 };
