@@ -14,6 +14,17 @@ function devWarn(msg: string, ...args: unknown[]) {
 }
 
 // ==============================
+// Warn-once (no spam in build logs)
+// ==============================
+let didWarnMissingSiteUrl = false;
+function warnMissingSiteUrlOnce(): void {
+  if (didWarnMissingSiteUrl) return;
+  didWarnMissingSiteUrl = true;
+  // intenționat: fără warning în production (ca să dispară complet)
+  devWarn("NEXT_PUBLIC_SITE_URL lipsește. URL-urile absolute vor fi relative.");
+}
+
+// ==============================
 // Helpers (parsing & normalize)
 // ==============================
 function parseBool(val: string | undefined, fallback = false): boolean {
@@ -99,14 +110,6 @@ const SITE_URL_NORMALIZED = normalizeSiteUrl(RAW_ENV_SITE_URL);
 // ✅ export public stabil (dev fallback, prod = "" dacă lipsește)
 export const SITE_URL =
   SITE_URL_NORMALIZED || (process.env.NODE_ENV !== "production" ? DEV_FALLBACK : "");
-
-// ✅ prod: nu blocăm build-ul; canonical/absoluteUrl degradează la path + warning
-if (process.env.NODE_ENV === "production" && !SITE_URL) {
-  // eslint-disable-next-line no-console
-  console.warn(
-    "[config.ts] NEXT_PUBLIC_SITE_URL lipsește în production. URL-urile absolute vor fi relative.",
-  );
-}
 
 // Trailing slash preference (din env brut)
 const PREFER_TRAILING = /\/$/.test(RAW_ENV_SITE_URL);
@@ -209,7 +212,7 @@ function alignTrailingSlash(pathname: string): string {
 
 export function canonical(pathname: string): string {
   if (!SITE.url) {
-    devWarn("SITE.url este gol — nu pot construi canonical absolut.");
+    warnMissingSiteUrlOnce();
     return pathname;
   }
   if (isExternal(pathname)) return pathname;
@@ -224,7 +227,7 @@ export function canonical(pathname: string): string {
 export function absoluteUrl(path: string): string {
   if (!path) return path;
   if (!SITE.url) {
-    devWarn("SITE.url este gol — nu pot construi URL absolut.");
+    warnMissingSiteUrlOnce();
     return path;
   }
   if (isExternal(path)) return path;
