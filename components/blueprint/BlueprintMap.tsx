@@ -42,6 +42,11 @@ type StageSize = {
   height: number;
 };
 
+type CameraView = {
+  zoom: number;
+  offset: Point;
+};
+
 // ==============================
 // Utils
 // ==============================
@@ -119,6 +124,51 @@ function blogHrefForSlug(slug: string): string {
   return `/blog/${slug}`;
 }
 
+function computeFitView(stage: StageSize, points: readonly Point[]): CameraView {
+  // Guard
+  if (points.length === 0) {
+    return { zoom: 1, offset: { x: stage.width / 2, y: stage.height / 2 } };
+  }
+
+  let minX = points[0]!.x;
+  let maxX = points[0]!.x;
+  let minY = points[0]!.y;
+  let maxY = points[0]!.y;
+
+  for (const p of points) {
+    minX = Math.min(minX, p.x);
+    maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y);
+    maxY = Math.max(maxY, p.y);
+  }
+
+  const worldW = Math.max(1, maxX - minX);
+  const worldH = Math.max(1, maxY - minY);
+
+  // generous padding to match the screenshot spacing
+  const basePad = 260;
+  const dynPad = Math.round(Math.max(worldW, worldH) * 0.18);
+  const pad = basePad + dynPad;
+
+  const fitW = worldW + pad * 2;
+  const fitH = worldH + pad * 2;
+
+  const z = clamp(Math.min(stage.width / fitW, stage.height / fitH), 0.65, 1.6);
+
+  const worldCx = (minX + maxX) / 2;
+  const worldCy = (minY + maxY) / 2;
+
+  const stageCx = stage.width / 2;
+  const stageCy = stage.height / 2;
+
+  const offset = {
+    x: stageCx - worldCx * z,
+    y: stageCy - worldCy * z,
+  };
+
+  return { zoom: z, offset };
+}
+
 // ==============================
 // Component
 // ==============================
@@ -149,6 +199,10 @@ export default function BlueprintMap() {
   const zoomRef = useRef(zoom);
   const offsetRef = useRef(offset);
 
+  // Default camera view (used for reset + retract fit)
+  const defaultViewRef = useRef<CameraView | null>(null);
+  const hasAppliedInitialFitRef = useRef(false);
+
   // Focus mgmt
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   const poiBtnRefs = useRef<Map<string, HTMLButtonElement | null>>(new Map());
@@ -172,8 +226,6 @@ export default function BlueprintMap() {
     right: false,
   });
 
-  const hasCenteredRef = useRef(false);
-
   const cameraAnimRef = useRef<{ raf: number; active: boolean } | null>(null);
 
   useEffect(() => {
@@ -183,6 +235,12 @@ export default function BlueprintMap() {
   useEffect(() => {
     offsetRef.current = offset;
   }, [offset]);
+
+  const allFitPoints = useMemo<readonly Point[]>(() => {
+    const hubs: Point[] = BLUEPRINT_DISTRICTS.map((d) => ({ x: d.x, y: d.y }));
+    const pois: Point[] = BLUEPRINT_POIS.map((p) => ({ x: p.x, y: p.y }));
+    return [...hubs, ...pois];
+  }, []);
 
   // stage size (minimap + viewport rect)
   useEffect(() => {
@@ -298,6 +356,20 @@ export default function BlueprintMap() {
     [animateCamera, reduceMotion],
   );
 
+  const applyFitAsDefault = useCallback(
+    (durationMs: number) => {
+      const el = stageRef.current;
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const next = computeFitView({ width: rect.width, height: rect.height }, allFitPoints);
+
+      defaultViewRef.current = next;
+      animateCamera(next.offset, next.zoom, durationMs);
+    },
+    [allFitPoints, animateCamera],
+  );
+
   const restorePoiFocus = useCallback(() => {
     const id = lastPoiIdRef.current;
     if (!id) return;
@@ -319,16 +391,40 @@ export default function BlueprintMap() {
     return () => window.cancelAnimationFrame(raf);
   }, [activePoi, restorePoiFocus]);
 
-  // center view once (client only)
+  // Initial fit once (client only) — match desired first view
   useEffect(() => {
-    if (hasCenteredRef.current) return;
+    if (hasAppliedInitialFitRef.current) return;
     const el = stageRef.current;
     if (!el) return;
 
     const rect = el.getBoundingClientRect();
-    setOffset({ x: rect.width / 2, y: rect.height / 2 });
-    hasCenteredRef.current = true;
-  }, []);
+    if (rect.width <= 0 || rect.height <= 0) return;
+
+    const next = computeFitView({ width: rect.width, height: rect.height }, allFitPoints);
+    defaultViewRef.current = next;
+
+    setZoom(next.zoom);
+    setOffset(next.offset);
+
+    hasAppliedInitialFitRef.current = true;
+  }, [allFitPoints]);
+
+  // When HUD retracts (open -> closed), refit camera to full content
+  const prevHudOpenRef = useRef<boolean>(isHudOpen);
+  useEffect(() => {
+    const prev = prevHudOpenRef.current;
+    prevHudOpenRef.current = isHudOpen;
+
+    // only when retracting (open -> closed)
+    if (prev && !isHudOpen) {
+      const raf = window.requestAnimationFrame(() => {
+        cancelCameraAnim();
+        applyFitAsDefault(reduceMotion ? 0 : 520);
+      });
+      return () => window.cancelAnimationFrame(raf);
+    }
+    return undefined;
+  }, [applyFitAsDefault, cancelCameraAnim, isHudOpen, reduceMotion]);
 
   // ESC closes modal / panel detail
   useEffect(() => {
@@ -523,14 +619,10 @@ export default function BlueprintMap() {
   }, [offset.x, offset.y, zoom]);
 
   const onResetView = () => {
-    const el = stageRef.current;
-    if (!el) return;
-
     cancelCameraAnim();
 
-    const rect = el.getBoundingClientRect();
-    setZoom(1);
-    setOffset({ x: rect.width / 2, y: rect.height / 2 });
+    // ✅ reset = same as initial “fit” view
+    applyFitAsDefault(reduceMotion ? 0 : 520);
   };
 
   const openPoi = (poi: BlueprintPoi) => {

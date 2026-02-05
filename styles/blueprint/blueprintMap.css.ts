@@ -24,7 +24,6 @@ const poiKindVars: Record<Kind, { accent: string; fill: string }> = {
 // ==============================
 // Constante
 // ==============================
-const DOCK_W = "clamp(220px, 22vw, 320px)";
 const DOCK_GAP = vars.space.md;
 
 // ==============================
@@ -46,7 +45,8 @@ export const root = style({
   "@media": {
     [mq.md]: {
       display: "grid",
-      gridTemplateColumns: `${DOCK_W} 1fr`,
+      // ✅ allow HUD to shrink when collapsed, map expands
+      gridTemplateColumns: "auto 1fr",
       gap: DOCK_GAP,
       alignItems: "stretch",
       padding: DOCK_GAP,

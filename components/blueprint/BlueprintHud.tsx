@@ -83,6 +83,18 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
       data-no-drag="true"
       data-open={isOpen ? "true" : "false"}
     >
+      {/* ✅ Desktop: retract/expand pill (right-mid) */}
+      <button
+        type="button"
+        className={s.hudSideToggle}
+        onClick={onToggleOpen}
+        aria-label={isOpen ? "Retrage HUD" : "Extinde HUD"}
+        aria-expanded={isOpen}
+        data-no-drag="true"
+      >
+        <span className={s.hudSideToggleIcon} aria-hidden="true" />
+      </button>
+
       <div className={s.hudInner}>
         <button
           type="button"
@@ -130,8 +142,9 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
                       aria-expanded={isAccOpen}
                       aria-controls={accId}
                       aria-label={`${isAccOpen ? "Închide" : "Deschide"} submeniu ${d.label}`}
+                      title={isAccOpen ? "Închide" : "Deschide"}
                     >
-                      <span className={s.accToggleLabel}>Menu</span>
+                      {/* ✅ “Menu” removed — keep only chevron */}
                       <span className={s.accChevron} aria-hidden="true" />
                     </button>
                   </div>

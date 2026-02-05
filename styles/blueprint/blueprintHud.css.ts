@@ -11,6 +11,7 @@ import { mq, vars } from "../theme.css";
 // Constante
 // ==============================
 const DOCK_W = "clamp(220px, 22vw, 320px)";
+const DOCK_W_COLLAPSED = 64;
 
 // ==============================
 // Classes
@@ -38,14 +39,18 @@ export const hud = style({
       right: "auto",
       bottom: "auto",
 
-      zIndex: "auto",
+      // ✅ allow the side toggle to visually sit outside the HUD (over map area)
+      zIndex: vars.z.overlay,
+      overflow: "visible",
+
       borderRadius: vars.radius.xl,
       boxShadow: vars.shadow.sm,
 
-      width: DOCK_W,
+      // ✅ collapsed by default on desktop; open state expands width
+      width: DOCK_W_COLLAPSED,
       height: "100%",
       maxHeight: "none",
-      transition: "none",
+      transition: `width ${vars.motion.fast} ${vars.motion.easing.standard}`,
       transform: "none",
     },
   },
@@ -53,8 +58,79 @@ export const hud = style({
 
 export const hudOpen = style({
   maxHeight: "62svh",
+
+  "@media": {
+    [mq.md]: {
+      width: DOCK_W,
+    },
+  },
 });
 
+// ==============================
+// Desktop side toggle (semi-circle, attached to HUD)
+// ==============================
+export const hudSideToggle = style({
+  display: "none",
+
+  "@media": {
+    [mq.md]: {
+      display: "grid",
+      placeItems: "center",
+      position: "absolute",
+
+      // ✅ attached to the HUD edge; protrudes to the RIGHT (map side)
+      left: "100%",
+      top: "50%",
+      transform: "translate3d(0, -50%, 0)",
+
+      // ✅ semi-circle look
+      width: 28,
+      height: 44,
+      borderRadius: "0 999px 999px 0",
+
+      // ✅ feels "merged" with HUD border (no double border line)
+      border: `1px solid ${vars.color.border}`,
+      borderLeft: 0,
+      background: vars.color.surface,
+      boxShadow: vars.shadow.sm,
+
+      cursor: "pointer",
+
+      // ✅ over the map (stage has no z-index)
+      zIndex: vars.z.overlay,
+
+      selectors: {
+        "&:hover": { background: "rgba(127,127,127,0.08)" },
+        "&:active": { background: "rgba(127,127,127,0.12)" },
+        "&:focus-visible": {
+          outline: `2px solid ${vars.color.focus}`,
+          outlineOffset: 2,
+        },
+      },
+    },
+  },
+});
+
+export const hudSideToggleIcon = style({
+  width: 10,
+  height: 10,
+  borderRight: "2px solid rgba(0,0,0,0.65)",
+  borderBottom: "2px solid rgba(0,0,0,0.65)",
+
+  // ✅ direction/orientation kept as-is (per your confirmation)
+  transform: "rotate(-45deg)",
+  transition: `transform ${vars.motion.fast} ${vars.motion.easing.standard}`,
+
+  selectors: {
+    [`${hud}[data-open="false"] &`]: {
+      transform: "rotate(135deg)",
+    },
+  },
+});
+
+// ==============================
+// Inner layout
+// ==============================
 export const hudInner = style({
   display: "grid",
   gridTemplateRows: "auto 1fr",
@@ -66,6 +142,13 @@ export const hudInner = style({
       height: "100%",
       padding: vars.space.md,
       gap: vars.space.md,
+
+      // ✅ collapsed desktop => hide inner content (side toggle remains visible)
+      selectors: {
+        [`${hud}[data-open="false"] &`]: {
+          display: "none",
+        },
+      },
     },
   },
 });
@@ -191,6 +274,7 @@ export const accToggle = style({
   padding: "10px 12px",
   display: "inline-flex",
   alignItems: "center",
+  justifyContent: "center",
   gap: 10,
   fontWeight: 900,
   fontSize: 12,
@@ -203,10 +287,6 @@ export const accToggle = style({
       outlineOffset: 2,
     },
   },
-});
-
-export const accToggleLabel = style({
-  opacity: 0.85,
 });
 
 export const accChevron = style({
@@ -233,7 +313,6 @@ export const accBody = style({
 });
 
 export const accBodyOpen = style({
-  // suficient pentru 3–12 elemente; scroll în interior
   maxHeight: "360px",
 });
 
@@ -339,9 +418,6 @@ export const accActionSecondary = style({
   },
 });
 
-// ==============================
-// Existing buttons
-// ==============================
 export const teleportButton = style({
   appearance: "none",
   border: `1px solid ${vars.color.border}`,
