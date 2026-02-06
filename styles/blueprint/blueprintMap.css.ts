@@ -45,10 +45,17 @@ export const root = style({
   "@media": {
     [mq.md]: {
       display: "grid",
+
+      // ✅ CRUCIAL: rândul NU mai este auto (max-content). Rămâne fix în viewport.
+      gridTemplateRows: "1fr",
+
       // ✅ allow HUD to shrink when collapsed, map expands
       gridTemplateColumns: "auto 1fr",
       gap: DOCK_GAP,
       alignItems: "stretch",
+
+      // ✅ keep grid items allowed to shrink (so internal scroll works)
+      // (minHeight: 0 on children; see hud + stage)
       padding: DOCK_GAP,
     },
   },
@@ -76,6 +83,10 @@ export const stage = style({
       inset: "auto",
       width: "100%",
       height: "100%",
+
+      // ✅ CRUCIAL: permite grid-ului să NU-și mărească rândul când HUD-ul crește
+      minHeight: 0,
+
       borderRadius: vars.radius.xl,
       overflow: "hidden",
       border: `1px solid ${vars.color.border}`,

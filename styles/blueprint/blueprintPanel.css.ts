@@ -21,6 +21,9 @@ export const wrap = style({
   zIndex: vars.z.overlay,
   pointerEvents: "auto",
 
+  // ✅ safety: never contribute to parent sizing
+  minHeight: 0,
+
   "@media": {
     [mq.md]: {
       left: "auto",
@@ -28,6 +31,9 @@ export const wrap = style({
       top: 270,
       bottom: 28, // ✅
       width: "min(460px, 42vw)",
+
+      // ✅ safety: keep it shrinkable
+      minHeight: 0,
     },
   },
 });
@@ -48,6 +54,9 @@ export const card = style({
 
   height: "100%", // ✅ umple wrap-ul (care are top+bottom)
   maxHeight: "46svh",
+
+  // ✅ CRUCIAL in grid contexts: allow the 1fr row to actually scroll
+  minHeight: 0,
 
   "@media": {
     [mq.md]: {
@@ -227,6 +236,9 @@ export const detail = style({
   gap: vars.space.sm,
   overflow: "auto",
   paddingRight: 2,
+
+  // ✅ safety
+  minHeight: 0,
 });
 
 export const detailTitle = style({

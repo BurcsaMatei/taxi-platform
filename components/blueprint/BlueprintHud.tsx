@@ -9,7 +9,8 @@ import { getAllPosts } from "../../lib/blogData";
 import type { BlueprintDistrict, BlueprintDistrictId } from "../../lib/blueprintdata/districts";
 import { BLUEPRINT_PANELS } from "../../lib/blueprintdata/panels";
 import * as s from "../../styles/blueprint/blueprintHud.css";
-import SmartLink from "../SmartLink";
+import Button from "../Button";
+import ExternalLink from "../ExternalLink";
 
 // ==============================
 // Types
@@ -26,6 +27,14 @@ export type BlueprintHudProps = {
   // ✅ in-map panel
   onOpenDistrictPanel: (districtId: BlueprintDistrictId) => void;
   onOpenPanelItem: (districtId: BlueprintDistrictId, itemId: string) => void;
+};
+
+type HudItem = {
+  id: string;
+  title: string;
+  description?: string;
+  internalHref?: string;
+  externalHref?: string;
 };
 
 // ==============================
@@ -66,7 +75,7 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
   }, []);
 
   // ✅ Blog items din data reală
-  const blogItems = React.useMemo(() => {
+  const blogItems = React.useMemo<ReadonlyArray<HudItem>>(() => {
     const posts = getAllPosts();
     return posts.map((p) => ({
       id: `blog-${p.slug}`,
@@ -84,7 +93,7 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
       data-open={isOpen ? "true" : "false"}
     >
       {/* ✅ Desktop: retract/expand pill (right-mid) */}
-      <button
+      <Button
         type="button"
         className={s.hudSideToggle}
         onClick={onToggleOpen}
@@ -93,10 +102,10 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
         data-no-drag="true"
       >
         <span className={s.hudSideToggleIcon} aria-hidden="true" />
-      </button>
+      </Button>
 
       <div className={s.hudInner}>
-        <button
+        <Button
           type="button"
           className={s.hudHandle}
           onClick={onToggleOpen}
@@ -105,12 +114,12 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
         >
           <span className={s.hudHandlePill} aria-hidden="true" />
           <span className={s.hudHandleArrow} aria-hidden="true" />
-        </button>
+        </Button>
 
         <div className={s.hudContent}>
-          <button type="button" className={s.hudBtn} onClick={onResetView}>
+          <Button type="button" className={s.hudBtn} onClick={onResetView}>
             Reset view
-          </button>
+          </Button>
 
           <div className={s.hudDistricts} aria-label="District menu">
             {districts.map((d) => {
@@ -120,22 +129,24 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
               const panel = BLUEPRINT_PANELS[d.id];
               const isBlog = d.id === "blog";
 
-              const items = isBlog ? blogItems : panel.items;
+              const items: ReadonlyArray<HudItem> = isBlog
+                ? blogItems
+                : (panel.items as unknown as HudItem[]);
 
               return (
                 <div key={d.id} className={s.accWrap}>
                   {/* Header row: Teleport + Accordion toggle */}
                   <div className={s.accHeader}>
-                    <button
+                    <Button
                       type="button"
                       className={s.teleportButton}
                       onClick={() => onTeleport(d.id)}
                       aria-label={`Teleport către ${d.label}`}
                     >
                       {d.label}
-                    </button>
+                    </Button>
 
-                    <button
+                    <Button
                       type="button"
                       className={s.accToggle}
                       onClick={() => toggle(d.id)}
@@ -146,18 +157,18 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
                     >
                       {/* ✅ “Menu” removed — keep only chevron */}
                       <span className={s.accChevron} aria-hidden="true" />
-                    </button>
+                    </Button>
                   </div>
 
                   {/* ✅ Open district panel (in-map) */}
-                  <button
+                  <Button
                     type="button"
                     className={s.openPanelLink}
                     onClick={() => onOpenDistrictPanel(d.id)}
                     aria-label={`Deschide panel pentru ${d.label}`}
                   >
                     Open district panel
-                  </button>
+                  </Button>
 
                   {/* Accordion body */}
                   <div
@@ -180,7 +191,7 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
                             return (
                               <li key={it.id} className={s.accItem}>
                                 {/* ✅ Click pe card => panel detail (in-map) */}
-                                <button
+                                <Button
                                   type="button"
                                   className={s.accItemButton}
                                   onClick={() => onOpenPanelItem(d.id, it.id)}
@@ -192,29 +203,33 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
                                       <p className={s.accItemDesc}>{it.description}</p>
                                     ) : null}
                                   </div>
-                                </button>
+                                </Button>
 
                                 <div className={s.accItemActions}>
-                                  {/* ✅ Pentru blog: "Open post" în tab nou (nu părăsim harta) */}
+                                  {/* ✅ Standard: internal => Button href (SmartLink sub capotă), new tab */}
                                   {hasInternal && d.id === "blog" ? (
-                                    <SmartLink
-                                      className={s.accActionPrimary}
+                                    <Button
                                       href={it.internalHref!}
+                                      className={s.accActionPrimary}
+                                      variant="link"
                                       newTab
+                                      prefetch={false}
+                                      aria-label={`Deschide articolul ${it.title} în tab nou`}
                                     >
                                       Open post
-                                    </SmartLink>
+                                    </Button>
                                   ) : null}
 
-                                  {/* ✅ Buton dedicat => site extern (new tab) */}
+                                  {/* ✅ Standard: external => ExternalLink (new tab) */}
                                   {hasExternal ? (
-                                    <SmartLink
+                                    <ExternalLink
                                       className={s.accActionSecondary}
-                                      href={it.externalHref}
+                                      href={it.externalHref!}
                                       newTab
+                                      aria-label={`Deschide site-ul pentru ${it.title} în tab nou`}
                                     >
                                       Open site
-                                    </SmartLink>
+                                    </ExternalLink>
                                   ) : null}
                                 </div>
                               </li>

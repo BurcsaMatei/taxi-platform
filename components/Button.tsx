@@ -8,6 +8,7 @@ import type {
   MouseEventHandler,
   ReactNode,
 } from "react";
+import * as React from "react";
 
 import {
   btn,
@@ -96,7 +97,7 @@ const buildRel = (rel: string | undefined, newTab?: boolean): string | undefined
 };
 
 // Component
-export default function Button(props: ButtonProps) {
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
   const {
     variant = "primary",
     size,
@@ -133,20 +134,16 @@ export default function Button(props: ButtonProps) {
 
     const isDisabled = !!disabled || !!isLoading;
 
-    // Props minime obligatorii
     const linkProps: SmartLinkProps & Partial<AriaAttributes> & { tabIndex?: number } = {
       href,
       className: composedClassName,
     };
 
-    // rel (doar dacă e definit după build)
     const computedRel = buildRel(rel, newTab);
     if (computedRel) linkProps.rel = computedRel;
 
-    // newTab (doar dacă e boolean)
     if (typeof newTab === "boolean") linkProps.newTab = newTab;
 
-    // prefetch: Next așteaptă boolean | "auto" — nu trimitem null/undefined
     if (typeof prefetch === "boolean" || prefetch === "auto") {
       linkProps.prefetch = prefetch;
     }
@@ -165,6 +162,7 @@ export default function Button(props: ButtonProps) {
       linkProps.onClick = onClick;
     }
 
+    // `ref` e relevant doar pentru <button>, îl ignorăm aici intenționat.
     return <SmartLink {...linkProps}>{children}</SmartLink>;
   }
 
@@ -175,6 +173,7 @@ export default function Button(props: ButtonProps) {
 
   return (
     <button
+      ref={ref}
       type={type}
       className={composedClassName}
       disabled={isDisabled}
@@ -186,4 +185,6 @@ export default function Button(props: ButtonProps) {
       {children}
     </button>
   );
-}
+});
+
+export default Button;

@@ -48,7 +48,12 @@ export const hud = style({
 
       // ✅ collapsed by default on desktop; open state expands width
       width: DOCK_W_COLLAPSED,
+
+      // ✅ CRUCIAL: stay constrained by the grid row; allow internal scroll instead
       height: "100%",
+      minHeight: 0,
+      alignSelf: "stretch",
+
       maxHeight: "none",
       transition: `width ${vars.motion.fast} ${vars.motion.easing.standard}`,
       transform: "none",
@@ -140,6 +145,7 @@ export const hudInner = style({
   "@media": {
     [mq.md]: {
       height: "100%",
+      minHeight: 0, // ✅ CRUCIAL: allows the 1fr row to be scrollable
       padding: vars.space.md,
       gap: vars.space.md,
 
@@ -210,6 +216,8 @@ export const hudContent = style({
 
   "@media": {
     [mq.md]: {
+      // ✅ CRUCIAL: keep content scrollable inside the HUD, not affecting grid row sizing
+      minHeight: 0,
       overflow: "auto",
       paddingBottom: 0,
     },

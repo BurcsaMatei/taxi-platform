@@ -9,7 +9,8 @@ import type {
   BlueprintDistrictPanelItem,
 } from "../../lib/blueprintdata/panels";
 import * as s from "../../styles/blueprint/blueprintPanel.css";
-import SmartLink from "../SmartLink";
+import Button from "../Button";
+import ExternalLink from "../ExternalLink";
 
 // ==============================
 // Types
@@ -40,15 +41,22 @@ export default function BlueprintPanel(props: BlueprintPanelProps): React.JSX.El
   const activeItemId = typeof props.activeItemId === "string" ? props.activeItemId : null;
 
   const activeItem = activeItemId ? (items.find((x) => x.id === activeItemId) ?? null) : null;
-
   const showList = !activeItem;
 
   return (
     <aside className={s.wrap} data-no-drag="true" aria-label="District panel">
-      <div className={s.card}>
-        <button type="button" className={s.closeBtn} onClick={onClose} aria-label="Închide panel">
+      {/* IMPORTANT: păstrăm s.card ca nod real => CSS-ul de overflow / z-index rămâne valid */}
+      <div className={s.card} aria-label="District panel card">
+        <Button
+          type="button"
+          className={s.closeBtn}
+          onClick={onClose}
+          aria-label="Închide panel"
+          variant="ghost"
+          iconOnly
+        >
           ×
-        </button>
+        </Button>
 
         <div className={s.header}>
           <p className={s.kicker}>District</p>
@@ -56,14 +64,15 @@ export default function BlueprintPanel(props: BlueprintPanelProps): React.JSX.El
           <p className={s.desc}>{panel.description}</p>
 
           {!showList ? (
-            <button
+            <Button
               type="button"
               className={s.backBtn}
               onClick={onBack}
               aria-label="Înapoi la listă"
+              variant="ghost"
             >
               ← Back
-            </button>
+            </Button>
           ) : null}
         </div>
 
@@ -84,17 +93,23 @@ export default function BlueprintPanel(props: BlueprintPanelProps): React.JSX.El
                 </button>
 
                 <div className={s.itemActions}>
+                  {/* ✅ extern: ExternalLink (recomandat) */}
                   {it.externalHref ? (
-                    <SmartLink className={s.actionPrimary} href={it.externalHref} newTab>
-                      Open site (new tab)
-                    </SmartLink>
+                    <ExternalLink className={s.actionPrimary} href={it.externalHref} newTab>
+                      Deschide site
+                    </ExternalLink>
                   ) : null}
 
-                  {/* ✅ internal link doar în tab nou, ca să rămânem în hartă */}
+                  {/* ✅ intern: Button href (tab nou, rămânem în hartă) */}
                   {it.internalHref ? (
-                    <SmartLink className={s.actionSecondary} href={it.internalHref} newTab>
-                      Open internal (new tab)
-                    </SmartLink>
+                    <Button
+                      className={s.actionSecondary}
+                      href={it.internalHref}
+                      newTab
+                      variant="link"
+                    >
+                      Open internal
+                    </Button>
                   ) : null}
                 </div>
               </div>
@@ -109,15 +124,20 @@ export default function BlueprintPanel(props: BlueprintPanelProps): React.JSX.El
 
             <div className={s.detailActions}>
               {activeItem.externalHref ? (
-                <SmartLink className={s.actionPrimary} href={activeItem.externalHref} newTab>
-                  Open site (new tab)
-                </SmartLink>
+                <ExternalLink className={s.actionPrimary} href={activeItem.externalHref} newTab>
+                  Deschide site
+                </ExternalLink>
               ) : null}
 
               {activeItem.internalHref ? (
-                <SmartLink className={s.actionSecondary} href={activeItem.internalHref} newTab>
-                  Open internal (new tab)
-                </SmartLink>
+                <Button
+                  className={s.actionSecondary}
+                  href={activeItem.internalHref}
+                  newTab
+                  variant="link"
+                >
+                  Open internal
+                </Button>
               ) : null}
             </div>
           </div>

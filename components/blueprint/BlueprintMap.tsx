@@ -14,6 +14,8 @@ import type { BlueprintPoi } from "../../lib/blueprintdata/pois";
 import { BLUEPRINT_POIS } from "../../lib/blueprintdata/pois";
 import * as sp from "../../styles/blueprint/blueprintMap.css";
 import { mq } from "../../styles/theme.css";
+import Button from "../Button";
+import ExternalLink from "../ExternalLink";
 import BlueprintHud from "./BlueprintHud";
 import BlueprintMiniMap from "./BlueprintMiniMap";
 import BlueprintPanel from "./BlueprintPanel";
@@ -810,22 +812,26 @@ export default function BlueprintMap() {
             aria-labelledby={modalTitleId}
             aria-describedby={modalDescId}
           >
+            {/* Backdrop rămâne button nativ (full-bleed) */}
             <button
               type="button"
               className={sp.modalBackdrop}
               onClick={closePoi}
               aria-label="Închide"
             />
+
             <div className={sp.modal}>
-              <button
+              <Button
                 ref={closeBtnRef}
                 type="button"
                 className={sp.modalClose}
                 onClick={closePoi}
                 aria-label="Închide"
+                variant="ghost"
+                iconOnly
               >
                 ×
-              </button>
+              </Button>
 
               <h2 id={modalTitleId} className={sp.modalTitle}>
                 {activePoi.title}
@@ -835,14 +841,9 @@ export default function BlueprintMap() {
               </p>
 
               <div className={sp.modalActions}>
-                <a
-                  className={sp.modalAction}
-                  href={activePoi.href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <ExternalLink className={sp.modalAction} href={activePoi.href} newTab>
                   Deschide site
-                </a>
+                </ExternalLink>
               </div>
             </div>
           </div>
