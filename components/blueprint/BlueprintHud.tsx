@@ -27,6 +27,9 @@ export type BlueprintHudProps = {
   // ✅ in-map panel
   onOpenDistrictPanel: (districtId: BlueprintDistrictId) => void;
   onOpenPanelItem: (districtId: BlueprintDistrictId, itemId: string) => void;
+
+  // ✅ in-map preview (replaces map area)
+  onOpenPreview: (href: string, title?: string) => void;
 };
 
 type HudItem = {
@@ -60,6 +63,7 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
     onTeleport,
     onOpenDistrictPanel,
     onOpenPanelItem,
+    onOpenPreview,
   } = props;
 
   // ✅ Acordeon per district (multi-open)
@@ -155,7 +159,6 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
                       aria-label={`${isAccOpen ? "Închide" : "Deschide"} submeniu ${d.label}`}
                       title={isAccOpen ? "Închide" : "Deschide"}
                     >
-                      {/* ✅ “Menu” removed — keep only chevron */}
                       <span className={s.accChevron} aria-hidden="true" />
                     </Button>
                   </div>
@@ -206,21 +209,20 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
                                 </Button>
 
                                 <div className={s.accItemActions}>
-                                  {/* ✅ Standard: internal => Button href (SmartLink sub capotă), new tab */}
-                                  {hasInternal && d.id === "blog" ? (
+                                  {/* ✅ Internal => in-map preview (NOT new tab) */}
+                                  {hasInternal ? (
                                     <Button
-                                      href={it.internalHref!}
+                                      type="button"
                                       className={s.accActionPrimary}
                                       variant="link"
-                                      newTab
-                                      prefetch={false}
-                                      aria-label={`Deschide articolul ${it.title} în tab nou`}
+                                      onClick={() => onOpenPreview(it.internalHref!, it.title)}
+                                      aria-label={`Deschide ${it.title} în preview`}
                                     >
-                                      Open post
+                                      Open preview
                                     </Button>
                                   ) : null}
 
-                                  {/* ✅ Standard: external => ExternalLink (new tab) */}
+                                  {/* ✅ External => ExternalLink (new tab) */}
                                   {hasExternal ? (
                                     <ExternalLink
                                       className={s.accActionSecondary}

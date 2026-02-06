@@ -29,13 +29,16 @@ export type BlueprintPanelProps = {
   onBack: () => void;
 
   onClose: () => void;
+
+  // ✅ in-map preview (replaces map area)
+  onOpenPreview: (href: string, title?: string) => void;
 };
 
 // ==============================
 // Component
 // ==============================
 export default function BlueprintPanel(props: BlueprintPanelProps): React.JSX.Element {
-  const { panel, onClose, onSelectItem, onBack } = props;
+  const { panel, onClose, onSelectItem, onBack, onOpenPreview } = props;
 
   const items: readonly BlueprintDistrictPanelItem[] = props.itemsOverride ?? panel.items;
   const activeItemId = typeof props.activeItemId === "string" ? props.activeItemId : null;
@@ -100,15 +103,15 @@ export default function BlueprintPanel(props: BlueprintPanelProps): React.JSX.El
                     </ExternalLink>
                   ) : null}
 
-                  {/* ✅ intern: Button href (tab nou, rămânem în hartă) */}
+                  {/* ✅ intern: in-map preview */}
                   {it.internalHref ? (
                     <Button
+                      type="button"
                       className={s.actionSecondary}
-                      href={it.internalHref}
-                      newTab
+                      onClick={() => onOpenPreview(it.internalHref!, it.title)}
                       variant="link"
                     >
-                      Open internal
+                      Open preview
                     </Button>
                   ) : null}
                 </div>
@@ -131,12 +134,12 @@ export default function BlueprintPanel(props: BlueprintPanelProps): React.JSX.El
 
               {activeItem.internalHref ? (
                 <Button
+                  type="button"
                   className={s.actionSecondary}
-                  href={activeItem.internalHref}
-                  newTab
+                  onClick={() => onOpenPreview(activeItem.internalHref!, activeItem.title)}
                   variant="link"
                 >
-                  Open internal
+                  Open preview
                 </Button>
               ) : null}
             </div>
