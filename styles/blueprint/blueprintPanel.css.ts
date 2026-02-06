@@ -1,8 +1,7 @@
 // styles/blueprint/blueprintPanel.css.ts
+// - Adăugăm suport pentru panel draggable prin CSS vars: --bp-panel-dx / --bp-panel-dy (fără style prop în TSX).
+// - Adăugăm un “drag handle” discret (doar md+) ca zonă sigură de apucat cu mouse-ul.
 
-// ==============================
-// Imports
-// ==============================
 import { style } from "@vanilla-extract/css";
 
 import { mq, vars } from "../theme.css";
@@ -23,6 +22,10 @@ export const wrap = style({
 
   // ✅ safety: never contribute to parent sizing
   minHeight: 0,
+
+  // ✅ draggable (md+): translate via CSS vars (default 0)
+  transform: "translate3d(var(--bp-panel-dx, 0px), var(--bp-panel-dy, 0px), 0)",
+  willChange: "transform",
 
   "@media": {
     [mq.md]: {
@@ -89,6 +92,43 @@ export const closeBtn = style({
     "&:hover": { background: "rgba(127,127,127,0.10)" },
     "&:focus-visible": { outline: `2px solid ${vars.color.focus}`, outlineOffset: 2 },
   },
+});
+
+export const dragHandle = style({
+  display: "none",
+  position: "relative",
+  width: "100%",
+  height: 18,
+
+  borderRadius: 999,
+  border: `1px solid ${vars.color.border}`,
+  background: "rgba(127,127,127,0.06)",
+  boxShadow: "none",
+
+  cursor: "grab",
+  userSelect: "none",
+
+  selectors: {
+    "&:active": { cursor: "grabbing" },
+    "&:focus-visible": { outline: `2px solid ${vars.color.focus}`, outlineOffset: 2 },
+  },
+
+  "@media": {
+    [mq.md]: {
+      display: "block",
+    },
+  },
+});
+
+export const dragHandleInner = style({
+  position: "absolute",
+  left: "50%",
+  top: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 46,
+  height: 4,
+  borderRadius: 999,
+  background: "rgba(127,127,127,0.24)",
 });
 
 export const header = style({

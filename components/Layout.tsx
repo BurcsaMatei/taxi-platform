@@ -6,6 +6,7 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 
 import { SITE, withBase } from "../lib/config";
 import Footer from "./Footer";
@@ -30,6 +31,26 @@ function Layout({ children }: LayoutProps) {
 
   // ✅ Index: fără footer (harta trebuie să rămână “curată”)
   const hideFooter = router.pathname === "/";
+
+  // ✅ Embed mode (iframe preview): nu scoatem Header/Footer din DOM (evităm hydration mismatch),
+  // doar setăm un flag pe <html> pe client, iar CSS-ul le ascunde.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const asPath = typeof router.asPath === "string" ? router.asPath : "";
+    const q = asPath.includes("?") ? (asPath.split("?")[1] ?? "") : "";
+    const query = q.split("#")[0] ?? "";
+    const params = new URLSearchParams(query);
+
+    const isEmbed = params.get("bpEmbed") === "1";
+    const html = document.documentElement;
+
+    if (isEmbed) {
+      html.dataset.bpEmbed = "1";
+    } else {
+      delete html.dataset.bpEmbed;
+    }
+  }, [router.asPath]);
 
   return (
     <div>

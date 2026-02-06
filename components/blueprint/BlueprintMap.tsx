@@ -1,8 +1,8 @@
 // components/blueprint/BlueprintMap.tsx
+// - Eliminăm complet hint-ul “Blueprint Map (MVP) …” din UI.
+// - Toggling global flag pe body: data-bp-preview-open="true" cât timp preview e deschis (ascunde header/footer prin globalStyle).
+// - Nu schimbăm logica map/hud/panel/preview în afara cerințelor.
 
-// ==============================
-// Imports
-// ==============================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getAllPosts } from "../../lib/blogData";
@@ -295,6 +295,22 @@ export default function BlueprintMap() {
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
+
+  // ✅ global flag for hiding header/footer while preview is open
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const body = document.body;
+
+    if (isPreviewOpen) {
+      body.setAttribute("data-bp-preview-open", "true");
+      setHeaderH(0);
+    } else {
+      body.removeAttribute("data-bp-preview-open");
+    }
+
+    return () => body.removeAttribute("data-bp-preview-open");
+  }, [isPreviewOpen]);
 
   const cancelCameraAnim = useCallback(() => {
     const a = cameraAnimRef.current;
@@ -803,11 +819,6 @@ export default function BlueprintMap() {
         role="region"
         aria-label="Blueprint map"
       >
-        <div className={sp.hint} data-no-drag="true">
-          <p className={sp.hintTitle}>Blueprint Map (MVP)</p>
-          <p className={sp.hintText}>Drag: mouse/touch • Zoom: scroll • Teleport: district</p>
-        </div>
-
         {/* ✅ Mini-map: md+ only (disabled during preview) */}
         {isMdUp && !isPreviewOpen ? (
           <BlueprintMiniMap

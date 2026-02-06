@@ -88,3 +88,12 @@ globalStyle(".sr-only", {
   whiteSpace: "nowrap",
   border: 0,
 });
+
+/* ==============================
+   Blueprint embed mode (iframe)
+   - păstrăm markup stabil (SSR/CSR)
+   - ascundem Header/Footer doar prin CSS
+============================== */
+globalStyle('html[data-bp-embed="1"] header, html[data-bp-embed="1"] footer', {
+  display: "none",
+});
