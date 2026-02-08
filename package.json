@@ -9,7 +9,12 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "npm -ws run lint",
     "typecheck": "npm -ws run typecheck",
-    "build": "npm -ws run build"
+    "build": "npm -ws run build",
+    "dev:api": "node api/dist/index.js",
+    "dev:controlcenter": "npm -w controlcenter run dev",
+    "tree": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/project-tree.ps1",
+    "tree:control": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/project-tree.ps1 -Root controlcenter",
+    "tree:api": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/project-tree.ps1 -Root api"
   },
   "keywords": [],
   "author": "",
