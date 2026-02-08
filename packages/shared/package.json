@@ -1,0 +1,19 @@
+{
+  "name": "@taxi/shared",
+  "version": "0.0.0",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "private": false,
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ]
+}

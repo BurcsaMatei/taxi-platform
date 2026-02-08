@@ -1,0 +1,24 @@
+{
+  "name": "@taxi/api",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@types/express": "^5.0.6"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "@taxi/shared": "file:../packages/shared"
+  }
+}
