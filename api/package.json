@@ -15,10 +15,12 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "@types/express": "^5.0.6"
+    "@types/express": "^5.0.6",
+    "@types/ws": "^8.18.1"
   },
   "dependencies": {
+    "@taxi/shared": "file:../packages/shared",
     "express": "^5.2.1",
-    "@taxi/shared": "file:../packages/shared"
+    "ws": "^8.19.0"
   }
 }
