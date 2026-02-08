@@ -2,3 +2,11 @@
 # deps
 node_modules/
 
+
+# build outputs
+**/dist/
+**/*.tsbuildinfo
+controlcenter/public/rss.xml
+controlcenter/public/feed.xml
+controlcenter/public/**/rss.xml
+controlcenter/public/**/feed.xml

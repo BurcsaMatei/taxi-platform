@@ -1,1 +1,0 @@
-{"version":3,"file":"vehicle.d.ts","sourceRoot":"","sources":["../../src/domain/vehicle.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,UAAU,CAAC;AAE9C,MAAM,WAAW,OAAO;IACtB,EAAE,EAAE,MAAM,CAAC;IACX,MAAM,EAAE,MAAM,CAAC;IAEf,SAAS,EAAE,MAAM,CAAC;IAClB,WAAW,EAAE,MAAM,CAAC;IAEpB,QAAQ,CAAC,EAAE,MAAM,CAAC;IAElB,MAAM,EAAE,aAAa,CAAC;CACvB"}
