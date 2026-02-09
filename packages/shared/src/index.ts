@@ -1,4 +1,6 @@
-﻿export * from "./domain/status.js";
+﻿// packages/shared/src/index.ts
+
+export * from "./domain/status.js";
 export * from "./domain/city.js";
 export * from "./domain/service.js";
 export * from "./domain/geo.js";
