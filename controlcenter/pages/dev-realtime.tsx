@@ -1,6 +1,6 @@
-﻿import React from "react";
-import type { RealtimeTopic } from "@taxi/shared";
+﻿import type { RealtimeTopic } from "@taxi/shared";
 import { topics } from "@taxi/shared";
+import React from "react";
 
 type LogItem = { ts: string; text: string };
 
