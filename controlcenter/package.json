@@ -13,8 +13,6 @@
     "format:check": "prettier --check .",
     "check": "npm run typecheck && npm run lint --if-present",
     "preview": "next dev -p 3002",
-    "rss:build": "tsx scripts/build-rss.ts",
-    "postbuild": "npm run rss:build",
     "check:all": "npm run typecheck && npm run lint"
   },
   "dependencies": {

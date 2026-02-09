@@ -1,24 +1,18 @@
-// components/blueprint/BlueprintMap.tsx
-// - Eliminăm complet hint-ul “Blueprint Map (MVP) …” din UI.
-// - Toggling global flag pe body: data-bp-preview-open="true" cât timp preview e deschis (ascunde header/footer prin globalStyle).
-// - Nu schimbăm logica map/hud/panel/preview în afara cerințelor.
+// controlcenter/components/blueprint/BlueprintMap.tsx
+// ✅ CONTROL CENTER (foundation cleanup)
+// - Eliminăm complet: Panel, MiniMap, Preview.
+// - Păstrăm: Map + HUD + camera (drag/zoom/WASD) + hubs + POIs + modal POI.
+// - Nu introducem Mapbox acum; doar curățenie și un shell stabil.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { getAllPosts } from "../../lib/blogData";
 import type { BlueprintDistrict, BlueprintDistrictId } from "../../lib/blueprintdata/districts";
 import { BLUEPRINT_DISTRICTS } from "../../lib/blueprintdata/districts";
-import type { BlueprintDistrictPanelItem } from "../../lib/blueprintdata/panels";
-import { BLUEPRINT_PANELS } from "../../lib/blueprintdata/panels";
 import type { BlueprintPoi } from "../../lib/blueprintdata/pois";
 import { BLUEPRINT_POIS } from "../../lib/blueprintdata/pois";
 import * as sp from "../../styles/blueprint/blueprintMap.css";
-import { mq } from "../../styles/theme.css";
 import ExternalLink from "../ExternalLink";
 import BlueprintHud from "./BlueprintHud";
-import BlueprintMiniMap from "./BlueprintMiniMap";
-import BlueprintPanel from "./BlueprintPanel";
-import BlueprintPreview from "./BlueprintPreview";
 
 // ==============================
 // Types
@@ -39,14 +33,14 @@ type KeyState = {
 
 type ActivePoi = BlueprintPoi | null;
 
-type StageSize = {
-  width: number;
-  height: number;
-};
-
 type CameraView = {
   zoom: number;
   offset: Point;
+};
+
+type StageSize = {
+  width: number;
+  height: number;
 };
 
 // ==============================
@@ -101,35 +95,7 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-
-    const mql = window.matchMedia(query);
-
-    const update = () => setMatches(Boolean(mql.matches));
-    update();
-
-    if (typeof mql.addEventListener === "function") {
-      mql.addEventListener("change", update);
-      return () => mql.removeEventListener("change", update);
-    }
-
-    mql.addListener(update);
-    return () => mql.removeListener(update);
-  }, [query]);
-
-  return matches;
-}
-
-function blogHrefForSlug(slug: string): string {
-  return `/blog/${slug}`;
-}
-
 function computeFitView(stage: StageSize, points: readonly Point[]): CameraView {
-  // Guard
   if (points.length === 0) {
     return { zoom: 1, offset: { x: stage.width / 2, y: stage.height / 2 } };
   }
@@ -182,27 +148,11 @@ export default function BlueprintMap() {
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [activePoi, setActivePoi] = useState<ActivePoi>(null);
-  const [stageSize, setStageSize] = useState<StageSize | null>(null);
 
   // ✅ HUD drawer (mobile only; desktop ignoră vizual prin CSS)
   const [isHudOpen, setIsHudOpen] = useState<boolean>(false);
 
-  // ✅ In-map panel state
-  const [activeDistrictId, setActiveDistrictId] = useState<BlueprintDistrictId | null>(null);
-  const [activePanelItemId, setActivePanelItemId] = useState<string | null>(null);
-
-  // ✅ In-map preview state (replaces map area)
-  const [previewHref, setPreviewHref] = useState<string | null>(null);
-  const [previewTitle, setPreviewTitle] = useState<string | null>(null);
-  const isPreviewOpen = typeof previewHref === "string" && previewHref.length > 0;
-
-  // ✅ pentru “full viewport fără zona albă” calculăm header height
-  const [headerH, setHeaderH] = useState<number>(0);
-
   const reduceMotion = usePrefersReducedMotion();
-
-  // ✅ minimap doar pe md+ (mobil: dezactivat complet)
-  const isMdUp = useMediaQuery(mq.md);
 
   const zoomRef = useRef(zoom);
   const offsetRef = useRef(offset);
@@ -249,68 +199,6 @@ export default function BlueprintMap() {
     const pois: Point[] = BLUEPRINT_POIS.map((p) => ({ x: p.x, y: p.y }));
     return [...hubs, ...pois];
   }, []);
-
-  // stage size (minimap + viewport rect)
-  useEffect(() => {
-    const el = stageRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const rect = el.getBoundingClientRect();
-      setStageSize({ width: rect.width, height: rect.height });
-    };
-
-    update();
-
-    if (typeof ResizeObserver !== "undefined") {
-      const ro = new ResizeObserver(() => update());
-      ro.observe(el);
-      return () => ro.disconnect();
-    }
-
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  // ✅ header height (pentru calc(100svh - header))
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-
-    const headerEl = document.querySelector("header");
-    if (!headerEl) {
-      setHeaderH(0);
-      return;
-    }
-
-    const update = () => setHeaderH(Math.round(headerEl.getBoundingClientRect().height));
-
-    update();
-
-    if (typeof ResizeObserver !== "undefined") {
-      const ro = new ResizeObserver(() => update());
-      ro.observe(headerEl);
-      return () => ro.disconnect();
-    }
-
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  // ✅ global flag for hiding header/footer while preview is open
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-
-    const body = document.body;
-
-    if (isPreviewOpen) {
-      body.setAttribute("data-bp-preview-open", "true");
-      setHeaderH(0);
-    } else {
-      body.removeAttribute("data-bp-preview-open");
-    }
-
-    return () => body.removeAttribute("data-bp-preview-open");
-  }, [isPreviewOpen]);
 
   const cancelCameraAnim = useCallback(() => {
     const a = cameraAnimRef.current;
@@ -360,26 +248,6 @@ export default function BlueprintMap() {
     [cancelCameraAnim, reduceMotion],
   );
 
-  const focusDistrict = useCallback(
-    (d: BlueprintDistrict) => {
-      const el = stageRef.current;
-      if (!el) return;
-
-      const rect = el.getBoundingClientRect();
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
-
-      const targetZoom = clamp(d.zoom, 0.65, 1.6);
-      const targetOffset = {
-        x: cx - d.x * targetZoom,
-        y: cy - d.y * targetZoom,
-      };
-
-      animateCamera(targetOffset, targetZoom, reduceMotion ? 0 : 700);
-    },
-    [animateCamera, reduceMotion],
-  );
-
   const applyFitAsDefault = useCallback(
     (durationMs: number) => {
       const el = stageRef.current;
@@ -415,7 +283,7 @@ export default function BlueprintMap() {
     return () => window.cancelAnimationFrame(raf);
   }, [activePoi, restorePoiFocus]);
 
-  // Initial fit once (client only) — match desired first view
+  // Initial fit once (client only)
   useEffect(() => {
     if (hasAppliedInitialFitRef.current) return;
     const el = stageRef.current;
@@ -439,7 +307,6 @@ export default function BlueprintMap() {
     const prev = prevHudOpenRef.current;
     prevHudOpenRef.current = isHudOpen;
 
-    // only when retracting (open -> closed)
     if (prev && !isHudOpen) {
       const raf = window.requestAnimationFrame(() => {
         cancelCameraAnim();
@@ -450,41 +317,24 @@ export default function BlueprintMap() {
     return undefined;
   }, [applyFitAsDefault, cancelCameraAnim, isHudOpen, reduceMotion]);
 
-  // ESC closes modal / panel detail / preview
+  // ESC closes modal
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
 
       if (activePoi) {
         setActivePoi(null);
-        return;
-      }
-
-      if (activePanelItemId) {
-        setActivePanelItemId(null);
-        return;
-      }
-
-      if (activeDistrictId) {
-        setActiveDistrictId(null);
-        return;
-      }
-
-      if (isPreviewOpen) {
-        setPreviewHref(null);
-        setPreviewTitle(null);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeDistrictId, activePanelItemId, activePoi, isPreviewOpen]);
+  }, [activePoi]);
 
-  // WASD / arrows movement loop (global, nu depinde de focus)
+  // WASD / arrows movement loop
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (isEditableTarget(e.target)) return;
-      if (isPreviewOpen) return; // ✅ disable map movement during preview
 
       const k = e.key.toLowerCase();
       const keys = keysRef.current;
@@ -525,23 +375,21 @@ export default function BlueprintMap() {
       const dt = Math.min(0.05, (t - last) / 1000);
       last = t;
 
-      if (!isPreviewOpen) {
-        const keys = keysRef.current;
-        const any =
-          keys.w || keys.a || keys.s || keys.d || keys.up || keys.left || keys.down || keys.right;
+      const keys = keysRef.current;
+      const any =
+        keys.w || keys.a || keys.s || keys.d || keys.up || keys.left || keys.down || keys.right;
 
-        if (any) {
-          cancelCameraAnim();
+      if (any) {
+        cancelCameraAnim();
 
-          const speed = 520; // px/sec (screen space)
-          const z = zoomRef.current || 1;
-          const step = speed * dt;
+        const speed = 520; // px/sec (screen space)
+        const z = zoomRef.current || 1;
+        const step = speed * dt;
 
-          const dx = (keys.a || keys.left ? step : 0) + (keys.d || keys.right ? -step : 0);
-          const dy = (keys.w || keys.up ? step : 0) + (keys.s || keys.down ? -step : 0);
+        const dx = (keys.a || keys.left ? step : 0) + (keys.d || keys.right ? -step : 0);
+        const dy = (keys.w || keys.up ? step : 0) + (keys.s || keys.down ? -step : 0);
 
-          setOffset((prev) => ({ x: prev.x + dx * z, y: prev.y + dy * z }));
-        }
+        setOffset((prev) => ({ x: prev.x + dx * z, y: prev.y + dy * z }));
       }
 
       raf = window.requestAnimationFrame(tick);
@@ -554,9 +402,9 @@ export default function BlueprintMap() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [cancelCameraAnim, isPreviewOpen]);
+  }, [cancelCameraAnim]);
 
-  // Pointer + wheel listeners (imperativ) => fără warnings jsx-a11y
+  // Pointer + wheel listeners
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -564,9 +412,6 @@ export default function BlueprintMap() {
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
 
-      if (isPreviewOpen) return; // ✅ disable map interaction in preview
-
-      // ✅ NU pornim drag dacă target-ul este interactiv / HUD / modal etc.
       if (isNoDragTarget(e.target)) return;
 
       cancelCameraAnim();
@@ -606,11 +451,8 @@ export default function BlueprintMap() {
     };
 
     const onWheel = (e: WheelEvent) => {
-      if (isPreviewOpen) return; // ✅ disable zoom in preview
       cancelCameraAnim();
 
-      // ✅ dacă scroll-ul vine din HUD/Panel/Modal/Preview (data-no-drag / element interactiv),
-      // lăsăm browser-ul să facă scroll normal (fără zoom în hartă)
       if (isNoDragTarget(e.target)) return;
 
       e.preventDefault();
@@ -648,20 +490,18 @@ export default function BlueprintMap() {
       el.removeEventListener("pointercancel", onPointerUp);
       el.removeEventListener("wheel", onWheel as EventListener);
     };
-  }, [cancelCameraAnim, isPreviewOpen]);
+  }, [cancelCameraAnim]);
 
   const layerTransform = useMemo(() => {
     return `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoom})`;
   }, [offset.x, offset.y, zoom]);
 
   const onResetView = () => {
-    if (isPreviewOpen) return; // ✅ no-op during preview
     cancelCameraAnim();
     applyFitAsDefault(reduceMotion ? 0 : 520);
   };
 
   const openPoi = (poi: BlueprintPoi) => {
-    if (isPreviewOpen) return;
     lastPoiIdRef.current = poi.id;
     setActivePoi(poi);
   };
@@ -704,7 +544,6 @@ export default function BlueprintMap() {
     );
   };
 
-  // ✅ District hubs (clădiri)
   const renderDistrictHub = (d: BlueprintDistrict) => {
     const vars: CssVars = {
       "--hub-x": `${d.x}px`,
@@ -716,8 +555,8 @@ export default function BlueprintMap() {
         <button
           type="button"
           className={sp.districtHubLink}
-          onClick={() => onOpenDistrictPanel(d.id)}
-          aria-label={`Deschide panel pentru ${d.label}`}
+          onClick={() => onTeleport(d.id)}
+          aria-label={`Teleport către ${d.label}`}
         >
           <span className={sp.districtHubRoof} aria-hidden="true" />
           <span className={sp.districtHubBody} aria-hidden="true" />
@@ -729,133 +568,56 @@ export default function BlueprintMap() {
 
           <span className={sp.districtHubLabel}>
             <span className={sp.districtHubTitle}>{d.label}</span>
-            <span className={sp.districtHubHint}>Open district panel</span>
+            <span className={sp.districtHubHint}>Teleport</span>
           </span>
         </button>
       </div>
     );
   };
 
-  const onOpenDistrictPanel = (districtId: BlueprintDistrictId) => {
-    setActiveDistrictId(districtId);
-    setActivePanelItemId(null);
-  };
-
-  const onCloseDistrictPanel = () => {
-    setActivePanelItemId(null);
-    setActiveDistrictId(null);
-  };
-
-  const onOpenPanelItem = (districtId: BlueprintDistrictId, itemId: string) => {
-    setActiveDistrictId(districtId);
-    setActivePanelItemId(itemId);
-  };
-
-  const onBackToPanelList = () => {
-    setActivePanelItemId(null);
-  };
-
   const onTeleport = (districtId: BlueprintDistrictId) => {
-    if (isPreviewOpen) return; // ✅ teleport disabled during preview
     const d = BLUEPRINT_DISTRICTS.find((x) => x.id === districtId);
     if (!d) return;
-    focusDistrict(d);
-  };
 
-  // ✅ Blog items din data reală (pentru HUD + Panel)
-  const blogItems = useMemo<readonly BlueprintDistrictPanelItem[]>(() => {
-    const posts = getAllPosts();
-    return posts.map((p) => ({
-      id: `blog-${p.slug}`,
-      title: p.title,
-      description: p.excerpt,
-      externalHref: "",
-      internalHref: blogHrefForSlug(p.slug),
-    }));
-  }, []);
+    const el = stageRef.current;
+    if (!el) return;
 
-  const onOpenPreview = (href: string, title?: string) => {
-    // close POI modal if any
-    setActivePoi(null);
+    const rect = el.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
 
-    // keep panel + hud active (as requested)
-    setPreviewHref(href);
-    setPreviewTitle(typeof title === "string" && title.length > 0 ? title : null);
-  };
+    const targetZoom = clamp(d.zoom, 0.65, 1.6);
+    const targetOffset = {
+      x: cx - d.x * targetZoom,
+      y: cy - d.y * targetZoom,
+    };
 
-  const onClosePreview = () => {
-    setPreviewHref(null);
-    setPreviewTitle(null);
+    animateCamera(targetOffset, targetZoom, reduceMotion ? 0 : 700);
   };
 
   const modalTitleId = activePoi ? `poi-title-${activePoi.id}` : undefined;
   const modalDescId = activePoi ? `poi-desc-${activePoi.id}` : undefined;
 
-  const rootVars: CssVars = {
-    "--bp-header-h": `${headerH}px`,
-  };
-
-  const basePanel = activeDistrictId ? BLUEPRINT_PANELS[activeDistrictId] : null;
-  const panelItemsOverride = activeDistrictId === "blog" ? blogItems : (basePanel?.items ?? null);
-
   return (
-    <div className={sp.root} style={rootVars}>
-      {/* ✅ HUD (dock desktop / drawer mobile) */}
+    <div className={sp.root}>
       <BlueprintHud
         isOpen={isHudOpen}
         onToggleOpen={() => setIsHudOpen((v) => !v)}
         districts={BLUEPRINT_DISTRICTS}
         onResetView={onResetView}
         onTeleport={onTeleport}
-        onOpenDistrictPanel={onOpenDistrictPanel}
-        onOpenPanelItem={onOpenPanelItem}
-        onOpenPreview={onOpenPreview}
       />
 
-      {/* ✅ Harta */}
       <div
         ref={stageRef}
-        className={`${sp.stage} ${isDragging ? sp.stageGrabbing : ""} ${isPreviewOpen ? sp.stagePreview : ""}`}
+        className={`${sp.stage} ${isDragging ? sp.stageGrabbing : ""}`}
         role="region"
         aria-label="Blueprint map"
       >
-        {/* ✅ Mini-map: md+ only (disabled during preview) */}
-        {isMdUp && !isPreviewOpen ? (
-          <BlueprintMiniMap
-            pois={BLUEPRINT_POIS}
-            districts={BLUEPRINT_DISTRICTS}
-            stageSize={stageSize}
-            offset={offset}
-            zoom={zoom}
-          />
-        ) : null}
-
-        {/* ✅ Panel (in-map) */}
-        {activeDistrictId && basePanel ? (
-          <BlueprintPanel
-            districtId={activeDistrictId}
-            panel={basePanel}
-            itemsOverride={panelItemsOverride}
-            activeItemId={activePanelItemId}
-            onSelectItem={(id) => onOpenPanelItem(activeDistrictId, id)}
-            onBack={onBackToPanelList}
-            onClose={onCloseDistrictPanel}
-            onOpenPreview={onOpenPreview}
-          />
-        ) : null}
-
-        {/* ✅ In-map preview (replaces map area; keeps HUD + Panel active) */}
-        {isPreviewOpen ? (
-          <BlueprintPreview href={previewHref!} title={previewTitle} onClose={onClosePreview} />
-        ) : null}
-
-        {/* ✅ Map layer (disabled during preview) */}
-        {!isPreviewOpen ? (
-          <div className={sp.layer} style={{ transform: layerTransform }}>
-            {BLUEPRINT_DISTRICTS.map(renderDistrictHub)}
-            {BLUEPRINT_POIS.map(renderPoi)}
-          </div>
-        ) : null}
+        <div className={sp.layer} style={{ transform: layerTransform }}>
+          {BLUEPRINT_DISTRICTS.map(renderDistrictHub)}
+          {BLUEPRINT_POIS.map(renderPoi)}
+        </div>
 
         {activePoi ? (
           <div
@@ -866,7 +628,6 @@ export default function BlueprintMap() {
             aria-labelledby={modalTitleId}
             aria-describedby={modalDescId}
           >
-            {/* Backdrop rămâne button nativ (full-bleed) */}
             <button
               type="button"
               className={sp.modalBackdrop}

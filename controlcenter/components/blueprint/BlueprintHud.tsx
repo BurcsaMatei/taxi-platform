@@ -1,11 +1,10 @@
-// components/blueprint/BlueprintHud.tsx
+// controlcenter/components/blueprint/BlueprintHud.tsx
 
 // ==============================
 // Imports
 // ==============================
 import * as React from "react";
 
-import { getAllPosts } from "../../lib/blogData";
 import type { BlueprintDistrict, BlueprintDistrictId } from "../../lib/blueprintdata/districts";
 import { BLUEPRINT_PANELS } from "../../lib/blueprintdata/panels";
 import * as s from "../../styles/blueprint/blueprintHud.css";
@@ -23,13 +22,6 @@ export type BlueprintHudProps = {
 
   onResetView: () => void;
   onTeleport: (districtId: BlueprintDistrictId) => void;
-
-  // ✅ in-map panel
-  onOpenDistrictPanel: (districtId: BlueprintDistrictId) => void;
-  onOpenPanelItem: (districtId: BlueprintDistrictId, itemId: string) => void;
-
-  // ✅ in-map preview (replaces map area)
-  onOpenPreview: (href: string, title?: string) => void;
 };
 
 type HudItem = {
@@ -47,24 +39,21 @@ function toTitleId(id: BlueprintDistrictId): string {
   return `hud-acc-${id}`;
 }
 
-function blogHrefForSlug(slug: string): string {
-  return `/blog/${slug}`;
+function openHref(href: string, newTab: boolean): void {
+  if (typeof window === "undefined") return;
+
+  if (newTab) {
+    window.open(href, "_blank", "noopener,noreferrer");
+  } else {
+    window.location.assign(href);
+  }
 }
 
 // ==============================
 // Component
 // ==============================
 export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Element {
-  const {
-    isOpen,
-    onToggleOpen,
-    districts,
-    onResetView,
-    onTeleport,
-    onOpenDistrictPanel,
-    onOpenPanelItem,
-    onOpenPreview,
-  } = props;
+  const { isOpen, onToggleOpen, districts, onResetView, onTeleport } = props;
 
   // ✅ Acordeon per district (multi-open)
   const [openSet, setOpenSet] = React.useState<ReadonlySet<BlueprintDistrictId>>(() => new Set());
@@ -76,18 +65,6 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
       else next.add(id);
       return next;
     });
-  }, []);
-
-  // ✅ Blog items din data reală
-  const blogItems = React.useMemo<ReadonlyArray<HudItem>>(() => {
-    const posts = getAllPosts();
-    return posts.map((p) => ({
-      id: `blog-${p.slug}`,
-      title: p.title,
-      description: p.excerpt,
-      internalHref: blogHrefForSlug(p.slug),
-      externalHref: "",
-    }));
   }, []);
 
   return (
@@ -131,11 +108,7 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
               const isAccOpen = openSet.has(d.id);
 
               const panel = BLUEPRINT_PANELS[d.id];
-              const isBlog = d.id === "blog";
-
-              const items: ReadonlyArray<HudItem> = isBlog
-                ? blogItems
-                : (panel.items as unknown as HudItem[]);
+              const items = panel.items as unknown as ReadonlyArray<HudItem>;
 
               return (
                 <div key={d.id} className={s.accWrap}>
@@ -163,16 +136,6 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
                     </Button>
                   </div>
 
-                  {/* ✅ Open district panel (in-map) */}
-                  <Button
-                    type="button"
-                    className={s.openPanelLink}
-                    onClick={() => onOpenDistrictPanel(d.id)}
-                    aria-label={`Deschide panel pentru ${d.label}`}
-                  >
-                    Open district panel
-                  </Button>
-
                   {/* Accordion body */}
                   <div
                     id={accId}
@@ -193,36 +156,26 @@ export default function BlueprintHud(props: BlueprintHudProps): React.JSX.Elemen
 
                             return (
                               <li key={it.id} className={s.accItem}>
-                                {/* ✅ Click pe card => panel detail (in-map) */}
-                                <Button
-                                  type="button"
-                                  className={s.accItemButton}
-                                  onClick={() => onOpenPanelItem(d.id, it.id)}
-                                  aria-label={`Deschide detalii pentru ${it.title}`}
-                                >
-                                  <div className={s.accItemMain}>
-                                    <p className={s.accItemTitle}>{it.title}</p>
-                                    {it.description ? (
-                                      <p className={s.accItemDesc}>{it.description}</p>
-                                    ) : null}
-                                  </div>
-                                </Button>
+                                <div className={s.accItemMain}>
+                                  <p className={s.accItemTitle}>{it.title}</p>
+                                  {it.description ? (
+                                    <p className={s.accItemDesc}>{it.description}</p>
+                                  ) : null}
+                                </div>
 
                                 <div className={s.accItemActions}>
-                                  {/* ✅ Internal => in-map preview (NOT new tab) */}
                                   {hasInternal ? (
                                     <Button
                                       type="button"
                                       className={s.accActionPrimary}
                                       variant="link"
-                                      onClick={() => onOpenPreview(it.internalHref!, it.title)}
-                                      aria-label={`Deschide ${it.title} în preview`}
+                                      onClick={() => openHref(it.internalHref!, false)}
+                                      aria-label={`Deschide ${it.title}`}
                                     >
-                                      Open preview
+                                      Open
                                     </Button>
                                   ) : null}
 
-                                  {/* ✅ External => ExternalLink (new tab) */}
                                   {hasExternal ? (
                                     <ExternalLink
                                       className={s.accActionSecondary}
