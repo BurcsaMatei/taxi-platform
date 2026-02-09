@@ -1,93 +1,83 @@
-﻿import type { GeoPoint } from "../domain/geo";
-import type { OrderStatus } from "../domain/status";
-import type { ServiceTypeCode } from "../domain/service";
+﻿import type { GeoPoint } from "../domain/geo.js";
+import type { OrderStatus } from "../domain/status.js";
+import type { ServiceTypeCode } from "../domain/service.js";
 
+// ==============================
+// Realtime event names
+// ==============================
 export type RealtimeEventName =
-  | "driver.location.updated"
-  | "driver.onlineStatus.updated"
   | "order.created"
-  | "order.status.updated"
-  | "dispatch.offer.created"
-  | "dispatch.offer.expired"
-  | "dispatch.offer.accepted"
-  | "dispatch.offer.declined";
+  | "order.assigned"
+  | "order.statusChanged"
+  | "driver.locationUpdated"
+  | "vehicle.locationUpdated";
+// (mai târziu) | "dispatch.metricsUpdated"
 
-export interface DriverLocationUpdatedPayload {
-  driverId: string;
-  vehicleId?: string;
-  cityId: string;
-  point: GeoPoint;
-  heading?: number;
-  speed?: number;
-  accuracy?: number;
-  recordedAt: string; // ISO
+// ==============================
+// Base envelope
+// ==============================
+export interface RealtimeEnvelopeBase<N extends RealtimeEventName, P> {
+  name: N;
+  ts: string; // ISO
+  payload: P;
 }
 
-export interface DriverOnlineStatusUpdatedPayload {
-  driverId: string;
-  cityId: string;
-  onlineStatus: "OFFLINE" | "ONLINE" | "BUSY";
-  updatedAt: string; // ISO
-}
-
-export interface OrderCreatedPayload {
+// ==============================
+// Event payloads
+// ==============================
+export interface RealtimeOrderCreatedPayload {
   orderId: string;
   cityId: string;
-  serviceType: ServiceTypeCode;
-  userId: string;
-  createdAt: string; // ISO
-}
-
-export interface OrderStatusUpdatedPayload {
-  orderId: string;
-  cityId: string;
+  service: ServiceTypeCode;
   status: OrderStatus;
-  assignedDriverId?: string;
-  assignedVehicleId?: string;
-  updatedAt: string; // ISO
+  pickup: GeoPoint;
+  dropoff: GeoPoint;
 }
 
-export interface DispatchOfferCreatedPayload {
+export interface RealtimeOrderAssignedPayload {
   orderId: string;
   cityId: string;
   driverId: string;
-  offeredAt: string; // ISO
-  expiresAt: string; // ISO
+  vehicleId: string;
 }
 
-export interface DispatchOfferExpiredPayload {
+export interface RealtimeOrderStatusChangedPayload {
   orderId: string;
   cityId: string;
-  driverId: string;
-  expiredAt: string; // ISO
+  from: OrderStatus;
+  to: OrderStatus;
 }
 
-export interface DispatchOfferAcceptedPayload {
-  orderId: string;
+export interface RealtimeDriverLocationUpdatedPayload {
+  driverId: string;
   cityId: string;
-  driverId: string;
-  acceptedAt: string; // ISO
+  at: GeoPoint;
 }
 
-export interface DispatchOfferDeclinedPayload {
-  orderId: string;
+export interface RealtimeVehicleLocationUpdatedPayload {
+  vehicleId: string;
   cityId: string;
-  driverId: string;
-  declinedAt: string; // ISO
+  at: GeoPoint;
 }
 
-export type RealtimeEventPayloadByName = {
-  "driver.location.updated": DriverLocationUpdatedPayload;
-  "driver.onlineStatus.updated": DriverOnlineStatusUpdatedPayload;
-  "order.created": OrderCreatedPayload;
-  "order.status.updated": OrderStatusUpdatedPayload;
-  "dispatch.offer.created": DispatchOfferCreatedPayload;
-  "dispatch.offer.expired": DispatchOfferExpiredPayload;
-  "dispatch.offer.accepted": DispatchOfferAcceptedPayload;
-  "dispatch.offer.declined": DispatchOfferDeclinedPayload;
-};
+// ==============================
+// Envelope union
+// ==============================
+export type RealtimeEnvelope =
+  | RealtimeEnvelopeBase<"order.created", RealtimeOrderCreatedPayload>
+  | RealtimeEnvelopeBase<"order.assigned", RealtimeOrderAssignedPayload>
+  | RealtimeEnvelopeBase<"order.statusChanged", RealtimeOrderStatusChangedPayload>
+  | RealtimeEnvelopeBase<"driver.locationUpdated", RealtimeDriverLocationUpdatedPayload>
+  | RealtimeEnvelopeBase<"vehicle.locationUpdated", RealtimeVehicleLocationUpdatedPayload>;
 
-export interface RealtimeEnvelope<Name extends RealtimeEventName = RealtimeEventName> {
-  name: Name;
-  payload: RealtimeEventPayloadByName[Name];
+// ==============================
+// Helpers
+// ==============================
+export function nowIso(): string {
+  return new Date().toISOString();
 }
+
+export function makeOrderCreatedEnvelope(payload: RealtimeOrderCreatedPayload): RealtimeEnvelope {
+  return { name: "order.created", ts: nowIso(), payload };
+}
+

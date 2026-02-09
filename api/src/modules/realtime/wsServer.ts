@@ -1,7 +1,7 @@
 ﻿import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import { WebSocketServer, WebSocket } from "ws";
-import type { RealtimeTopic } from "@taxi/shared";
+import type { RealtimeEnvelope, RealtimeTopic } from "@taxi/shared";
 import { isRealtimeTopic } from "@taxi/shared";
 
 type ClientMsg =
@@ -9,13 +9,11 @@ type ClientMsg =
   | { type: "unsubscribe"; topic: RealtimeTopic }
   | { type: "ping" };
 
-// NOTE: pentru moment event este unknown.
-// După ce confirmăm tipul exact din shared/events/realtime.ts, îl tipăm strict.
 type ServerMsg =
   | { type: "ready" }
   | { type: "subscribed"; topic: RealtimeTopic }
   | { type: "unsubscribed"; topic: RealtimeTopic }
-  | { type: "event"; topic: RealtimeTopic; event: unknown }
+  | { type: "event"; topic: RealtimeTopic; event: RealtimeEnvelope }
   | { type: "error"; message: string };
 
 function safeSend(ws: WebSocket, msg: ServerMsg): void {
@@ -23,8 +21,18 @@ function safeSend(ws: WebSocket, msg: ServerMsg): void {
   ws.send(JSON.stringify(msg));
 }
 
+function isAllowedTopic(topic: RealtimeTopic): boolean {
+  // registry simplu (azi permis “prefix-based”)
+  return (
+    topic.startsWith("city:") ||
+    topic.startsWith("order:") ||
+    topic.startsWith("driver:") ||
+    topic.startsWith("controlcenter:")
+  );
+}
+
 export interface RealtimeHub {
-  publish(topic: RealtimeTopic, event: unknown): void;
+  publish(topic: RealtimeTopic, event: RealtimeEnvelope): void;
   handleUpgrade(req: IncomingMessage, socket: Duplex, head: Buffer): void;
 }
 
@@ -35,6 +43,11 @@ export function createRealtimeHub(): RealtimeHub {
   const socketSubs = new WeakMap<WebSocket, Set<RealtimeTopic>>();
 
   function subscribe(ws: WebSocket, topic: RealtimeTopic): void {
+    if (!isAllowedTopic(topic)) {
+      safeSend(ws, { type: "error", message: "Topic not allowed" });
+      return;
+    }
+
     let set = topicSubs.get(topic);
     if (!set) {
       set = new Set<WebSocket>();
@@ -93,7 +106,7 @@ export function createRealtimeHub(): RealtimeHub {
         return;
       }
 
-      const t = (msg as any).type as unknown;
+      const t = (msg as { type?: unknown }).type;
 
       if (t === "ping") {
         safeSend(ws, { type: "ready" });
@@ -101,7 +114,7 @@ export function createRealtimeHub(): RealtimeHub {
       }
 
       if (t === "subscribe") {
-        const topic = (msg as any).topic as unknown;
+        const topic = (msg as { topic?: unknown }).topic;
         if (!isRealtimeTopic(topic)) {
           safeSend(ws, { type: "error", message: "Invalid topic" });
           return;
@@ -111,7 +124,7 @@ export function createRealtimeHub(): RealtimeHub {
       }
 
       if (t === "unsubscribe") {
-        const topic = (msg as any).topic as unknown;
+        const topic = (msg as { topic?: unknown }).topic;
         if (!isRealtimeTopic(topic)) {
           safeSend(ws, { type: "error", message: "Invalid topic" });
           return;
@@ -135,7 +148,7 @@ export function createRealtimeHub(): RealtimeHub {
 
   wss.on("close", () => clearInterval(interval));
 
-  function publish(topic: RealtimeTopic, event: unknown): void {
+  function publish(topic: RealtimeTopic, event: RealtimeEnvelope): void {
     const set = topicSubs.get(topic);
     if (!set) return;
     for (const ws of set) safeSend(ws, { type: "event", topic, event });
@@ -147,7 +160,7 @@ export function createRealtimeHub(): RealtimeHub {
       socket.destroy();
       return;
     }
-    wss.handleUpgrade(req, socket as any, head, (ws) => {
+    wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit("connection", ws, req);
     });
   }
