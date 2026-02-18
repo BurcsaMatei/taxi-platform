@@ -29,6 +29,7 @@ export function middleware(req: NextRequest) {
   const HAS_GTM = !!(process.env.NEXT_PUBLIC_GTM_ID || "").trim();
   const HAS_GA = !!(process.env.NEXT_PUBLIC_GA4_ID || process.env.NEXT_PUBLIC_GA_ID || "").trim();
   const HAS_FB = !!(process.env.NEXT_PUBLIC_FB_PIXEL_ID || "").trim();
+  const HAS_MAPBOX = !!(process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "").trim();
 
   // Opțional: CDN de imagini din NEXT_PUBLIC_ASSET_BASE
   let ASSET_ORIGIN = "";
@@ -55,7 +56,12 @@ export function middleware(req: NextRequest) {
     ...(HAS_FB ? ["https://connect.facebook.net"] : []),
   ];
 
-  const styleSrc: string[] = ["'self'", "'unsafe-inline'"]; // CSS-in-JS & mici inline-uri
+  const styleSrc: string[] = [
+    "'self'",
+    "'unsafe-inline'", // CSS-in-JS & mici inline-uri
+    ...(HAS_MAPBOX ? ["https://api.mapbox.com"] : []), // mapbox css (safe allow)
+  ];
+
   const imgSrc: string[] = [
     "'self'",
     "https:",
@@ -63,14 +69,22 @@ export function middleware(req: NextRequest) {
     "blob:",
     ...(ASSET_ORIGIN ? [ASSET_ORIGIN] : []),
   ];
+
   const fontSrc: string[] = ["'self'", "https:", "data:"];
+
   const connectSrc: string[] = [
     "'self'",
     ...(isProd ? [] : ["ws:"]),
     ...(HAS_GA ? ["https://www.google-analytics.com", "https://region1.google-analytics.com"] : []),
     ...(HAS_GTM ? ["https://www.googletagmanager.com"] : []),
     ...(HAS_FB ? ["https://graph.facebook.com", "https://connect.facebook.net"] : []),
+
+    // Mapbox: styles, tiles, glyphs, telemetry
+    ...(HAS_MAPBOX
+      ? ["https://api.mapbox.com", "https://events.mapbox.com", "https://*.mapbox.com"]
+      : []),
   ];
+
   const frameSrc: string[] = ["'self'", "https://www.google.com", "https://*.google.com"];
 
   const directives = [

@@ -82,6 +82,10 @@ export const panel = style({
   background: vars.color.surface,
   overflow: "hidden",
   minHeight: 0,
+
+  // IMPORTANT: allow children to fill height
+  display: "grid",
+  gridTemplateRows: "auto 1fr",
 });
 
 export const panelHeader = style({
@@ -103,8 +107,29 @@ export const panelTitle = style({
 export const panelBody = style({
   padding: vars.space.xl,
   minHeight: 0,
+
+  // IMPORTANT: let map area grow and avoid "100% of 0px"
+  display: "grid",
 });
 
 export const mono = style({
   fontFamily: "monospace",
+});
+
+export const mapCanvas = style({
+  position: "relative",
+  overflow: "hidden",
+  borderRadius: vars.radius.md,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.bg,
+
+  // IMPORTANT: real height so Mapbox can render
+  height: "min(72svh, 720px)",
+  minHeight: 420,
+  width: "100%",
+});
+
+export const mapFill = style({
+  position: "absolute",
+  inset: 0,
 });

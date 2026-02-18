@@ -23,7 +23,7 @@ type ServerMsg =
   | { type: "subscribed"; topic: RealtimeTopic }
   | { type: "unsubscribed"; topic: RealtimeTopic }
   | { type: "event"; topic: RealtimeTopic; event: RealtimeEnvelope }
-  | { type: "error"; message: string };
+  | { type: "error"; error: string };
 
 export interface RealtimeHub {
   publish(topic: RealtimeTopic, event: RealtimeEnvelope): void;
@@ -124,13 +124,13 @@ export function createRealtimeHub(): RealtimeHub {
       try {
         decoded = JSON.parse(String(buf));
       } catch {
-        safeSend(ws, { type: "error", message: "Invalid JSON" });
+        safeSend(ws, { type: "error", error: "Invalid JSON" });
         return;
       }
 
       const msg = parseClientMsg(decoded);
       if (!msg) {
-        safeSend(ws, { type: "error", message: "Invalid message" });
+        safeSend(ws, { type: "error", error: "Invalid message" });
         return;
       }
 

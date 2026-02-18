@@ -3,6 +3,8 @@ import express from "express";
 import type { OrderStatus } from "@taxi/shared";
 import { createRealtimeHub } from "./modules/realtime/wsServer.js";
 import { registerOrdersModule } from "./modules/orders/index.js";
+import { registerVehiclesModule } from "./modules/vehicles/index.js";
+
 
 const app = express();
 app.use(express.json());
@@ -18,6 +20,7 @@ const server = http.createServer(app);
 const hub = createRealtimeHub();
 
 registerOrdersModule(app, hub);
+registerVehiclesModule(app, hub);
 
 server.on("upgrade", (req, socket, head) => {
   hub.handleUpgrade(req, socket, head);
