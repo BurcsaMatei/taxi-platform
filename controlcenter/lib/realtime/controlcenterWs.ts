@@ -3,9 +3,8 @@
 // ==============================
 // Imports
 // ==============================
-import * as React from "react";
-
 import type { RealtimeEnvelope } from "@taxi/shared";
+import * as React from "react";
 
 // ==============================
 // Types
