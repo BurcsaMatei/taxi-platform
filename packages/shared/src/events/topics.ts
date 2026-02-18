@@ -1,5 +1,8 @@
 ﻿// packages/shared/src/events/topics.ts
 
+// ==============================
+// Types
+// ==============================
 export type RealtimeTopic =
   | `city:${string}`
   | `order:${string}`
@@ -7,6 +10,9 @@ export type RealtimeTopic =
   | `vehicle:${string}`
   | `controlcenter:${string}`;
 
+// ==============================
+// Topics
+// ==============================
 export const topics = {
   city: (cityId: string): RealtimeTopic => `city:${cityId}`,
   order: (orderId: string): RealtimeTopic => `order:${orderId}`,
