@@ -26,6 +26,7 @@ export const topBar = style({
   paddingInline: vars.space.xl,
   paddingBlock: vars.space.lg,
   borderBottom: `1px solid ${vars.color.border}`,
+  flexWrap: "wrap",
 });
 
 export const title = style({
@@ -42,6 +43,7 @@ export const meta = style({
   gap: vars.space.lg,
   fontSize: "0.875rem",
   color: vars.color.muted,
+  flexWrap: "wrap",
 });
 
 export const pill = style({
@@ -53,6 +55,7 @@ export const pill = style({
   borderRadius: 999,
   border: `1px solid ${vars.color.border}`,
   background: vars.color.surface,
+  whiteSpace: "nowrap",
 });
 
 export const dot = style({
@@ -82,10 +85,6 @@ export const panel = style({
   background: vars.color.surface,
   overflow: "hidden",
   minHeight: 0,
-
-  // IMPORTANT: allow children to fill height
-  display: "grid",
-  gridTemplateRows: "auto 1fr",
 });
 
 export const panelHeader = style({
@@ -107,9 +106,6 @@ export const panelTitle = style({
 export const panelBody = style({
   padding: vars.space.xl,
   minHeight: 0,
-
-  // IMPORTANT: let map area grow and avoid "100% of 0px"
-  display: "grid",
 });
 
 export const mono = style({
@@ -117,19 +113,45 @@ export const mono = style({
 });
 
 export const mapCanvas = style({
-  position: "relative",
-  overflow: "hidden",
-  borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.border}`,
-  background: vars.color.bg,
-
-  // IMPORTANT: real height so Mapbox can render
-  height: "min(72svh, 720px)",
+  height: "min(62vh, 720px)",
   minHeight: 420,
-  width: "100%",
+  borderRadius: vars.radius.md,
+  overflow: "hidden",
+  border: `1px solid ${vars.color.border}`,
 });
 
 export const mapFill = style({
-  position: "absolute",
-  inset: 0,
+  height: "100%",
+  width: "100%",
+});
+
+// ==============================
+// Taxi marker (Mapbox Marker element)
+// ==============================
+export const taxiMarker = style({
+  position: "relative",
+  display: "grid",
+  justifyItems: "center",
+  gap: 6,
+  transform: "translateY(-6px)",
+});
+
+export const taxiMarkerLabel = style({
+  paddingInline: 10,
+  paddingBlock: 4,
+  borderRadius: 999,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.surface,
+  color: vars.color.text,
+  fontSize: 12,
+  fontWeight: 800,
+  lineHeight: 1,
+  boxShadow: "0 8px 18px rgba(0,0,0,0.16)",
+});
+
+export const taxiMarkerIcon = style({
+  width: 36,
+  height: 36,
+  display: "block",
+  filter: "drop-shadow(0 10px 16px rgba(0,0,0,0.22))",
 });

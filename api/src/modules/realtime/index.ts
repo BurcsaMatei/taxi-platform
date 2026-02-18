@@ -9,16 +9,22 @@ import type { RealtimeHub } from "./wsServer.js";
 // ==============================
 // Registry
 // ==============================
-type TopicPrefix = "city:" | "order:" | "driver:" | "controlcenter:";
+type TopicPrefix = "city:" | "order:" | "driver:" | "vehicle:" | "controlcenter:";
 
 const ALLOWED_BY_PREFIX: Readonly<Record<TopicPrefix, ReadonlySet<RealtimeEnvelope["name"]>>> =
   {
     "city:": new Set<RealtimeEnvelope["name"]>(["order.created"]),
     "order:": new Set<RealtimeEnvelope["name"]>(["order.statusChanged"]),
     "driver:": new Set<RealtimeEnvelope["name"]>([]),
+
+    // ✅ per-vehicle stream (optional dar recomandat)
+    "vehicle:": new Set<RealtimeEnvelope["name"]>(["vehicle.locationUpdated"]),
+
+    // ✅ controlcenter trebuie să primească și locationUpdated
     "controlcenter:": new Set<RealtimeEnvelope["name"]>([
       "order.created",
       "order.statusChanged",
+      "vehicle.locationUpdated",
     ]),
   };
 
@@ -27,7 +33,13 @@ function topicPrefix(topic: RealtimeTopic): TopicPrefix | null {
   if (idx < 0) return null;
   const p = (topic.slice(0, idx + 1) + "") as string;
 
-  if (p === "city:" || p === "order:" || p === "driver:" || p === "controlcenter:") {
+  if (
+    p === "city:" ||
+    p === "order:" ||
+    p === "driver:" ||
+    p === "vehicle:" ||
+    p === "controlcenter:"
+  ) {
     return p;
   }
   return null;
@@ -44,8 +56,6 @@ function isAllowed(topic: RealtimeTopic, name: RealtimeEnvelope["name"]): boolea
 // ==============================
 export function publishStrict(hub: RealtimeHub, topic: RealtimeTopic, event: RealtimeEnvelope): void {
   if (!isAllowed(topic, event.name)) {
-    // dev guard: nu publicăm greșit pe topic greșit
-    // (nu aruncăm error ca să nu rupem flow-ul)
     // eslint-disable-next-line no-console
     console.warn(`[realtime] blocked publish: ${event.name} -> ${topic}`);
     return;

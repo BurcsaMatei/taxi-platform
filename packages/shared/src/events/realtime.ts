@@ -10,7 +10,8 @@ import type { ServiceTypeCode } from "../domain/service.js";
 export type RealtimeEventName =
   | "order.created"
   | "order.statusChanged"
-  | "vehicle.locationUpdated";
+  | "vehicle.locationUpdated"
+  | "vehicle.presenceChanged";
 
 export type OrderCreatedPayload = {
   orderId: string;
@@ -30,11 +31,17 @@ export type OrderStatusChangedPayload = {
 };
 
 export type VehicleLocationUpdatedPayload = {
-  vehicleId: string;
+  vehicleId: string; // indicativ (ex: "01")
   cityId: string;
   point: GeoPoint; // { lat, lng }
   heading?: number; // degrees (0..360)
-  speed?: number; // m/s or km/h (dev-only; we don't assume unit)
+  speed?: number; // dev-only (unit not assumed)
+};
+
+export type VehiclePresenceChangedPayload = {
+  vehicleId: string; // indicativ (ex: "01")
+  cityId: string;
+  online: boolean;
 };
 
 export type RealtimeEnvelope =
@@ -52,6 +59,11 @@ export type RealtimeEnvelope =
       name: "vehicle.locationUpdated";
       ts: string; // ISO
       payload: VehicleLocationUpdatedPayload;
+    }
+  | {
+      name: "vehicle.presenceChanged";
+      ts: string; // ISO
+      payload: VehiclePresenceChangedPayload;
     };
 
 // ==============================
@@ -69,8 +81,10 @@ export function makeOrderStatusChangedEnvelope(payload: OrderStatusChangedPayloa
   return { name: "order.statusChanged", ts: nowIso(), payload };
 }
 
-export function makeVehicleLocationUpdatedEnvelope(
-  payload: VehicleLocationUpdatedPayload,
-): RealtimeEnvelope {
+export function makeVehicleLocationUpdatedEnvelope(payload: VehicleLocationUpdatedPayload): RealtimeEnvelope {
   return { name: "vehicle.locationUpdated", ts: nowIso(), payload };
+}
+
+export function makeVehiclePresenceChangedEnvelope(payload: VehiclePresenceChangedPayload): RealtimeEnvelope {
+  return { name: "vehicle.presenceChanged", ts: nowIso(), payload };
 }
