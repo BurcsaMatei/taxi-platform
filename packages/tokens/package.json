@@ -1,0 +1,19 @@
+{
+  "name": "@taxi/tokens",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme.types": "./src/theme.types.ts"
+  },
+  "dependencies": {
+    "@vanilla-extract/css": "^1.17.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

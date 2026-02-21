@@ -5,7 +5,6 @@
 // ==============================
 import type { NextPage } from "next";
 
-import BlueprintMap from "../components/blueprint/BlueprintMap";
 import Seo from "../components/Seo";
 import type { Json } from "../interfaces";
 import { absoluteUrl, SEO_DEFAULTS } from "../lib/config";
@@ -35,7 +34,6 @@ const Home: NextPage = () => {
         structuredData={[breadcrumbList]}
       />
 
-      <BlueprintMap />
     </>
   );
 };

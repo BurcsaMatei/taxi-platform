@@ -10,7 +10,12 @@ import { mq, vars } from "./theme.css";
 // ==============================
 // Tokens & utilities
 // ==============================
-const transition = `background ${vars.motion.normal} ${vars.motion.easing}, border-color ${vars.motion.normal} ${vars.motion.easing}, opacity ${vars.motion.normal} ${vars.motion.easing}`;
+const transition = [
+  `background ${vars.motion.normal} ${vars.motion.easing.standard}`,
+  `border-color ${vars.motion.normal} ${vars.motion.easing.standard}`,
+  `opacity ${vars.motion.normal} ${vars.motion.easing.standard}`,
+  `transform ${vars.motion.normal} ${vars.motion.easing.standard}`,
+].join(", ");
 
 // ==============================
 // Classes
@@ -29,6 +34,7 @@ export const banner = style({
   padding: vars.space.md,
   display: "grid",
   gap: vars.space.sm,
+  transition,
   "@media": {
     [mq.lg]: {
       gridTemplateColumns: "1fr auto",
@@ -38,7 +44,10 @@ export const banner = style({
       right: "auto",
       transform: "translateX(-50%)",
     },
-    "(prefers-reduced-motion: reduce)": { transition: "none" },
+    "(prefers-reduced-motion: reduce)": {
+      transition: "none",
+      transform: "none",
+    },
   },
 });
 
@@ -75,7 +84,9 @@ export const btn = style({
   background: vars.color.surface,
   color: vars.color.text,
   transition,
-  ":active": { transform: "translateY(1px)" },
+  selectors: {
+    "&:active": { transform: "translateY(1px)" },
+  },
 });
 
 export const btnPrimary = style({
@@ -119,5 +130,5 @@ export const srOnly = style({
 globalStyle(`${btn}:focus-visible`, {
   outline: `2px solid ${vars.color.focus}`,
   outlineOffset: 2,
-  borderRadius: vars.radius.md as string,
+  borderRadius: vars.radius.md,
 });
