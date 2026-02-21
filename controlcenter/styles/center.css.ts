@@ -8,7 +8,6 @@ import { style, styleVariants } from "@vanilla-extract/css";
 // ==============================
 // Types
 // ==============================
-export type GapSize = keyof typeof gapScale;
 
 // ==============================
 // Constante

@@ -12,11 +12,11 @@ import { vars } from "./theme.css";
 // Tranziții consistente + token contur (alb implicit; override via CSS var)
 // ==============================
 const transition = [
-  `background-color ${vars.motion.normal} ${vars.motion.easing}`,
-  `color ${vars.motion.normal} ${vars.motion.easing}`,
-  `border-color ${vars.motion.normal} ${vars.motion.easing}`,
-  `box-shadow ${vars.motion.normal} ${vars.motion.easing}`,
-  `opacity ${vars.motion.normal} ${vars.motion.easing}`,
+  `background-color ${vars.motion.normal} ${vars.motion.easing.standard}`,
+  `color ${vars.motion.normal} ${vars.motion.easing.standard}`,
+  `border-color ${vars.motion.normal} ${vars.motion.easing.standard}`,
+  `box-shadow ${vars.motion.normal} ${vars.motion.easing.standard}`,
+  `opacity ${vars.motion.normal} ${vars.motion.easing.standard}`,
 ].join(", ");
 
 const outlineColor = "var(--btn-outline, #fff)";
@@ -58,12 +58,12 @@ globalStyle(`${btn} a`, { textDecoration: "none" });
 // Sizes
 export const sm = style({
   padding: "8px 12px",
-  borderRadius: vars.radius.md ?? vars.radius.lg,
+  borderRadius: vars.radius.md,
 });
 
 export const lg = style({
   padding: "14px 18px",
-  borderRadius: vars.radius.xl ?? vars.radius.lg,
+  borderRadius: vars.radius.xl,
 });
 
 // Variants — primary

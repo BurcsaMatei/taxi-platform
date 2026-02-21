@@ -39,8 +39,11 @@ export const containerThemeWide = createTheme(containerVars, {
  */
 export const pageScope = style({});
 
+// Selector container (reutilizat)
+const autoContainerSelector = `.${pageScope} section:not(.fullBleed):not([data-full-bleed="true"])` as const;
+
 // Toate <section> din pageScope primesc container (cu opt-out pentru full-bleed)
-globalStyle(`.${pageScope} section:not(.fullBleed):not([data-full-bleed="true"])`, {
+globalStyle(autoContainerSelector, {
   width: "100%",
   maxWidth: containerVars.max,
   margin: "0 auto",
@@ -50,12 +53,11 @@ globalStyle(`.${pageScope} section:not(.fullBleed):not([data-full-bleed="true"])
 });
 
 // La ecrane mari, creștem padding-ul orizontal (se aplică tuturor temelor)
-globalStyle(`.${pageScope}`, {
+globalStyle(autoContainerSelector, {
   "@media": {
     [mq.lg]: {
-      vars: {
-        [containerVars.padX]: vars.space.xl,
-      },
+      paddingLeft: vars.space.xl,
+      paddingRight: vars.space.xl,
     },
   },
 });
