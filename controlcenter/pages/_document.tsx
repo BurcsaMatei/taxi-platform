@@ -13,7 +13,7 @@ import Document, {
 } from "next/document";
 
 import { SITE, THEME, withBase } from "../lib/config";
-import { themeClassDark, themeClassLight } from "../styles/theme.css";
+import { themeClassDark, themeClassLight } from "@taxi/tokens";
 
 // ==============================
 // Utils

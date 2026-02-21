@@ -20,8 +20,9 @@ import type ServiceWorkerRegisterComponent from "../components/ServiceWorkerRegi
 import { withBase } from "../lib/config";
 // Container scope + tema implicită (Vanilla Extract) — wrapper global permis
 import { containerThemeDefault, pageScope } from "../styles/container.css";
-// Theme classes (Vanilla Extract)
-import { themeClassDark, themeClassLight } from "../styles/theme.css";
+// Theme classes (Vanilla Extract) — DIRECT din tokens (fără shim)
+import { themeClassDark, themeClassLight } from "@taxi/tokens";
+
 type ServiceWorkerRegisterProps = React.ComponentProps<typeof ServiceWorkerRegisterComponent>;
 
 import type InstallAppButtonComponent from "../components/InstallAppButton";

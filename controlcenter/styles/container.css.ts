@@ -5,7 +5,7 @@
 // ==============================
 import { createTheme, createVar, globalStyle, style } from "@vanilla-extract/css";
 
-import { mq, vars } from "./theme.css";
+import { mq, vars } from "@taxi/tokens";
 
 // ==============================
 // Constante
