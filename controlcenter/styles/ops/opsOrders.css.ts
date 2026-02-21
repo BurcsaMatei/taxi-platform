@@ -36,7 +36,9 @@ export const th = style({
   padding: vars.space.md,
   borderBottom: `1px solid ${vars.color.border}`,
   color: vars.color.muted,
-  fontWeight: 800,
+  fontWeight: 900,
+  textTransform: "uppercase",
+  letterSpacing: "0.02em",
   whiteSpace: "nowrap",
 });
 
@@ -67,7 +69,7 @@ export const badge = style({
   borderRadius: 999,
   border: `1px solid ${vars.color.border}`,
   background: vars.color.surfaceHover,
-  fontWeight: 800,
+  fontWeight: 900,
   whiteSpace: "nowrap",
 });
 
@@ -78,14 +80,16 @@ export const badgeMuted = style({
 export const empty = style({
   padding: vars.space.lg,
   color: vars.color.muted,
+  fontWeight: 900,
 });
 
 export const rowSplit = style({
   display: "grid",
-  gap: vars.space.sm,
+  gap: 6,
 });
 
 export const small = style({
   fontSize: "12px",
   color: vars.color.muted,
+  fontWeight: 800,
 });

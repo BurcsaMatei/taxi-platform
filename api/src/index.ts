@@ -1,16 +1,18 @@
-﻿import http from "node:http";
+﻿// api/src/index.ts
+
+import http from "node:http";
 import express from "express";
 import type { OrderStatus } from "@taxi/shared";
 import { createRealtimeHub } from "./modules/realtime/wsServer.js";
+import { registerCitiesModule } from "./modules/cities/index.js";
 import { registerOrdersModule } from "./modules/orders/index.js";
 import { registerVehiclesModule } from "./modules/vehicles/index.js";
-
 
 const app = express();
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
-  const status: OrderStatus = "DRAFT";
+  const status: OrderStatus = "NEW";
   res.status(200).json({ ok: true, sharedStatus: status });
 });
 
@@ -19,6 +21,7 @@ const port = Number(process.env.PORT || 3001);
 const server = http.createServer(app);
 const hub = createRealtimeHub();
 
+registerCitiesModule(app);
 registerOrdersModule(app, hub);
 registerVehiclesModule(app, hub);
 

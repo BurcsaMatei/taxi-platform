@@ -5,8 +5,8 @@
 // ==============================
 import "mapbox-gl/dist/mapbox-gl.css";
 
-import type { RealtimeEnvelope } from "@taxi/shared";
-import { topics } from "@taxi/shared";
+import type { OrderStatus, RealtimeEnvelope } from "@taxi/shared";
+import { isActiveOrderStatus, topics } from "@taxi/shared";
 import type { Feature, FeatureCollection, Point } from "geojson";
 import type { GeoJSONSource, IControl, Map as MapboxMap } from "mapbox-gl";
 import * as React from "react";
@@ -24,7 +24,10 @@ const FLEET_TOTAL = 250;
 const DEFAULT_CENTER: readonly [number, number] = [23.584, 47.659]; // [lng, lat]
 const DEFAULT_ZOOM = 13;
 
-// considerăm “online” dacă a trimis locationUpdated în ultimele 60s
+// focus default (safe)
+const FOCUS_ZOOM = 15.5;
+
+// considerăm “online” dacă a trimis touch (presence/location) în ultimele 60s
 const ONLINE_TTL_MS = 60_000;
 
 // icon local (public/)
@@ -37,12 +40,63 @@ const LAYER_ID = "vehicles-layer";
 // ==============================
 // Types
 // ==============================
+type FleetVehicle = {
+  vehicleId: string; // indicativ (ex: "01")
+  indicativLabel: string; // ex: "INDICATIV 01"
+  plateNumber: string; // ex: "MM01ABC"
+  driverName: string; // ex: "IACOB MARIUS"
+  carModel: string; // ex: "RENAUL MEGANE"
+  carImagePath: string; // path (frontend asset)
+  driverImagePath: string; // path (frontend asset)
+};
+
+type FleetResponse = {
+  ok: true;
+  cityId: string;
+  total: number;
+  vehicles: ReadonlyArray<FleetVehicle>;
+};
+
+type CityPublic = {
+  id: string;
+  name: string;
+  slug: string;
+  timezone: string;
+  isActive: boolean;
+  dispatchPhone?: string;
+};
+
+type CityResponseOk = {
+  ok: true;
+  city: CityPublic;
+};
+
 type VehiclePoint = {
   vehicleId: string; // "01".."250" (indicativ)
   lng: number;
   lat: number;
   ts: string; // ISO
 };
+
+type VehiclePresence = {
+  vehicleId: string;
+  online: boolean;
+  ts: string; // ISO
+};
+
+type OrderAssigned = {
+  orderId: string;
+  vehicleId: string;
+  ts: string; // ISO
+};
+
+type OrderStatusSnap = {
+  orderId: string;
+  status: OrderStatus;
+  ts: string; // ISO
+};
+
+type DriverUiStatus = "OFFLINE" | "ONLINE" | "BUSY";
 
 type VehicleFeatureProps = {
   vehicleId: string;
@@ -76,14 +130,50 @@ function parseIsoMs(iso: string): number {
   return Number.isFinite(ms) ? ms : Date.now();
 }
 
-function isOrderEvent(e: RealtimeEnvelope): boolean {
-  return e.name === "order.created" || e.name === "order.statusChanged";
+function fmtIsoLocal(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${y}-${m}-${dd} ${hh}:${mm}:${ss}`;
 }
 
-function getOrderId(e: RealtimeEnvelope): string | null {
-  if (e.name === "order.created") return e.payload.orderId;
-  if (e.name === "order.statusChanged") return e.payload.orderId;
-  return null;
+function fmtAge(nowMs: number, iso: string): string {
+  const ts = parseIsoMs(iso);
+  const diff = Math.max(0, nowMs - ts);
+
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  return `${d}d`;
+}
+
+function toTelHref(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const cleaned = trimmed.replace(/[^\d+]/g, "");
+  if (!cleaned) return "";
+  return `tel:${cleaned}`;
+}
+
+function normalizeIndicativInput(raw: string): string {
+  const s = raw.trim();
+  if (!s) return "";
+  const digits = s.replace(/[^\d]/g, "");
+  if (!digits) return "";
+
+  // common: "5" -> "05"
+  if (digits.length === 1) return `0${digits}`;
+  return digits;
 }
 
 function getVehiclePoint(e: RealtimeEnvelope): VehiclePoint | null {
@@ -97,6 +187,38 @@ function getVehiclePoint(e: RealtimeEnvelope): VehiclePoint | null {
     lat: p.lat,
     ts: e.ts,
   };
+}
+
+function getVehiclePresence(e: RealtimeEnvelope): VehiclePresence | null {
+  if (e.name !== "vehicle.presenceChanged") return null;
+
+  return {
+    vehicleId: e.payload.vehicleId,
+    online: e.payload.online,
+    ts: e.ts,
+  };
+}
+
+function getOrderAssigned(e: RealtimeEnvelope): OrderAssigned | null {
+  if (e.name !== "order.assigned") return null;
+
+  return {
+    orderId: e.payload.orderId,
+    vehicleId: e.payload.vehicleId,
+    ts: e.ts,
+  };
+}
+
+function getOrderStatusSnap(e: RealtimeEnvelope): OrderStatusSnap | null {
+  if (e.name === "order.created") {
+    return { orderId: e.payload.orderId, status: e.payload.status, ts: e.ts };
+  }
+
+  if (e.name === "order.statusChanged") {
+    return { orderId: e.payload.orderId, status: e.payload.toStatus, ts: e.ts };
+  }
+
+  return null;
 }
 
 function useNowTick(ms = 1000): number {
@@ -119,20 +241,82 @@ function loadMapImage(map: MapboxMap, url: string): Promise<unknown> {
   });
 }
 
+async function fetchFleetDirectory(cityId: string): Promise<FleetResponse> {
+  const url = `/api/fleet/${encodeURIComponent(cityId)}`;
+
+  const res = await fetch(url, { method: "GET" });
+  const data = (await res.json()) as unknown;
+
+  if (!res.ok) {
+    throw new Error("Fleet proxy error");
+  }
+
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid fleet response");
+  }
+
+  const d = data as Partial<FleetResponse>;
+  if (!d.ok || !Array.isArray(d.vehicles)) {
+    throw new Error("Fleet endpoint returned error");
+  }
+
+  return d as FleetResponse;
+}
+
+async function fetchCity(cityId: string): Promise<CityPublic> {
+  const url = `/api/cities/${encodeURIComponent(cityId)}`;
+
+  const res = await fetch(url, { method: "GET" });
+  const data = (await res.json()) as unknown;
+
+  if (!res.ok) {
+    throw new Error("City proxy error");
+  }
+
+  if (!data || typeof data !== "object") {
+    throw new Error("Invalid city response");
+  }
+
+  const d = data as Partial<CityResponseOk>;
+  if (!d.ok || !d.city || typeof d.city !== "object") {
+    throw new Error("City endpoint returned error");
+  }
+
+  return d.city as CityPublic;
+}
+
 // ==============================
 // Mapbox (client-only)
 // ==============================
 function useMapboxMap(
   containerRef: React.RefObject<HTMLDivElement>,
-  vehicles: ReadonlyArray<VehiclePoint>,
-): { ok: boolean; error: string | null } {
+  vehiclesForRender: ReadonlyArray<VehiclePoint>,
+  vehiclesForSearch: ReadonlyArray<VehiclePoint>,
+  onSelectVehicleId: (vehicleId: string) => void,
+): {
+  ok: boolean;
+  error: string | null;
+  focusVehicle: (vehicleId: string) => boolean;
+  resetView: () => void;
+} {
   const [state, setState] = React.useState<{ ok: boolean; error: string | null }>({
     ok: false,
     error: null,
   });
 
   const mapRef = React.useRef<MapboxMap | null>(null);
-  const modRef = React.useRef<MapboxModule | null>(null);
+
+  // ✅ SEARCH map: last known point (even if old)
+  const vehiclesRef = React.useRef<Map<string, VehiclePoint>>(new Map<string, VehiclePoint>());
+
+  const onSelectRef = React.useRef(onSelectVehicleId);
+  onSelectRef.current = onSelectVehicleId;
+
+  React.useEffect(() => {
+    const m = new Map<string, VehiclePoint>();
+    for (const v of vehiclesForSearch) m.set(v.vehicleId, v);
+    vehiclesRef.current = m;
+  }, [vehiclesForSearch]);
 
   React.useEffect(() => {
     const el = containerRef.current;
@@ -152,7 +336,6 @@ function useMapboxMap(
         const m = raw as MapboxModule;
         if (disposed) return;
 
-        modRef.current = m;
         m.default.accessToken = token;
 
         const map = new m.default.Map({
@@ -171,7 +354,6 @@ function useMapboxMap(
           if (disposed) return;
 
           try {
-            // icon
             if (!map.hasImage(TAXI_ICON_ID)) {
               const img = await loadMapImage(map, TAXI_ICON_SRC);
               if (!disposed && !map.hasImage(TAXI_ICON_ID)) {
@@ -179,18 +361,13 @@ function useMapboxMap(
               }
             }
 
-            // source
             if (!map.getSource(SOURCE_ID)) {
               map.addSource(SOURCE_ID, {
                 type: "geojson",
-                data: {
-                  type: "FeatureCollection",
-                  features: [],
-                },
+                data: { type: "FeatureCollection", features: [] },
               });
             }
 
-            // layer: icon + label (indicativ deasupra)
             if (!map.getLayer(LAYER_ID)) {
               map.addLayer({
                 id: LAYER_ID,
@@ -215,6 +392,19 @@ function useMapboxMap(
                 },
               });
             }
+
+            map.on("click", LAYER_ID, (ev) => {
+              const f = ev.features && ev.features[0];
+              if (!f) return;
+
+              const props = f.properties as unknown;
+              if (!props || typeof props !== "object") return;
+
+              const v = props as { vehicleId?: unknown };
+              if (typeof v.vehicleId !== "string" || v.vehicleId.trim().length === 0) return;
+
+              onSelectRef.current(v.vehicleId);
+            });
 
             map.resize();
             setState({ ok: true, error: null });
@@ -243,7 +433,7 @@ function useMapboxMap(
     };
   }, [containerRef]);
 
-  // Update GeoJSON data (after source exists)
+  // ✅ render only ONLINE markers (as before)
   React.useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -251,7 +441,7 @@ function useMapboxMap(
     const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
     if (!src) return;
 
-    const features: VehicleFeature[] = vehicles.map((v) => ({
+    const features: VehicleFeature[] = vehiclesForRender.map((v) => ({
       type: "Feature",
       geometry: { type: "Point", coordinates: [v.lng, v.lat] },
       properties: { vehicleId: v.vehicleId, ts: v.ts },
@@ -259,9 +449,44 @@ function useMapboxMap(
 
     const data: VehicleFeatureCollection = { type: "FeatureCollection", features };
     src.setData(data);
-  }, [vehicles]);
+  }, [vehiclesForRender]);
 
-  return state;
+  const focusVehicle = React.useCallback((vehicleId: string): boolean => {
+    const map = mapRef.current;
+    if (!map) return false;
+
+    const v = vehiclesRef.current.get(vehicleId);
+    if (!v) return false;
+
+    try {
+      map.flyTo({
+        center: [v.lng, v.lat],
+        zoom: FOCUS_ZOOM,
+        essential: true,
+      });
+      onSelectRef.current(vehicleId);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const resetView = React.useCallback((): void => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    try {
+      map.flyTo({
+        center: DEFAULT_CENTER as unknown as [number, number],
+        zoom: DEFAULT_ZOOM,
+        essential: true,
+      });
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  return { ok: state.ok, error: state.error, focusVehicle, resetView };
 }
 
 // ==============================
@@ -273,23 +498,71 @@ export default function OpsMapPage(): React.JSX.Element {
 
   const now = useNowTick(1000);
 
-  const counts = React.useMemo(() => {
-    let created = 0;
-    let statusChanged = 0;
+  const [fleet, setFleet] = React.useState<ReadonlyArray<FleetVehicle>>([]);
+  const [fleetError, setFleetError] = React.useState<string | null>(null);
+
+  const [city, setCity] = React.useState<CityPublic | null>(null);
+  const [cityError, setCityError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      try {
+        const r = await fetchFleetDirectory(CITY_ID);
+        if (!alive) return;
+
+        setFleet(r.vehicles);
+        setFleetError(null);
+      } catch (err) {
+        if (!alive) return;
+        const msg = err instanceof Error ? err.message : "Failed to load fleet directory";
+        setFleet([]);
+        setFleetError(msg);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      try {
+        const c = await fetchCity(CITY_ID);
+        if (!alive) return;
+
+        setCity(c);
+        setCityError(null);
+      } catch (err) {
+        if (!alive) return;
+        const msg = err instanceof Error ? err.message : "Failed to load city info";
+        setCity(null);
+        setCityError(msg);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const fleetById = React.useMemo(() => {
+    const m = new globalThis.Map<string, FleetVehicle>();
+    for (const v of fleet) m.set(v.vehicleId, v);
+    return m;
+  }, [fleet]);
+
+  const [selectedVehicleId, setSelectedVehicleId] = React.useState<string | null>(null);
+
+  const latestPresenceById = React.useMemo(() => {
+    const byId = new globalThis.Map<string, VehiclePresence>();
 
     for (const e of events) {
-      if (e.name === "order.created") created += 1;
-      if (e.name === "order.statusChanged") statusChanged += 1;
-    }
-
-    return { created, statusChanged };
-  }, [events]);
-
-  const vehiclesOnline = React.useMemo(() => {
-    const byId = new globalThis.Map<string, VehiclePoint>();
-
-    for (const e of events) {
-      const vp = getVehiclePoint(e);
+      const vp = getVehiclePresence(e);
       if (!vp) continue;
 
       const prev = byId.get(vp.vehicleId);
@@ -298,40 +571,223 @@ export default function OpsMapPage(): React.JSX.Element {
       }
     }
 
+    return byId;
+  }, [events]);
+
+  const latestPointById = React.useMemo(() => {
+    const byId = new globalThis.Map<string, VehiclePoint>();
+
+    for (const e of events) {
+      const p = getVehiclePoint(e);
+      if (!p) continue;
+
+      const prev = byId.get(p.vehicleId);
+      if (!prev || parseIsoMs(p.ts) >= parseIsoMs(prev.ts)) {
+        byId.set(p.vehicleId, p);
+      }
+    }
+
+    return byId;
+  }, [events]);
+
+  const latestAssignedByOrderId = React.useMemo(() => {
+    const byOrder = new globalThis.Map<string, OrderAssigned>();
+
+    for (const e of events) {
+      const a = getOrderAssigned(e);
+      if (!a) continue;
+
+      const prev = byOrder.get(a.orderId);
+      if (!prev || parseIsoMs(a.ts) >= parseIsoMs(prev.ts)) {
+        byOrder.set(a.orderId, a);
+      }
+    }
+
+    return byOrder;
+  }, [events]);
+
+  const latestStatusByOrderId = React.useMemo(() => {
+    const byOrder = new globalThis.Map<string, OrderStatusSnap>();
+
+    for (const e of events) {
+      const s = getOrderStatusSnap(e);
+      if (!s) continue;
+
+      const prev = byOrder.get(s.orderId);
+      if (!prev || parseIsoMs(s.ts) >= parseIsoMs(prev.ts)) {
+        byOrder.set(s.orderId, s);
+      }
+    }
+
+    return byOrder;
+  }, [events]);
+
+  // ✅ online if we have a recent location within TTL
+  // ✅ exclude if explicit presence=false is recent enough
+  const vehiclesOnline = React.useMemo(() => {
     const out: VehiclePoint[] = [];
-    for (const v of byId.values()) {
-      const lastSeen = parseIsoMs(v.ts);
-      const isOnline = now - lastSeen <= ONLINE_TTL_MS;
-      if (!isOnline) continue;
-      out.push(v);
+
+    for (const [vehicleId, p] of latestPointById.entries()) {
+      const pMs = parseIsoMs(p.ts);
+      if (now - pMs > ONLINE_TTL_MS) continue;
+
+      const pres = latestPresenceById.get(vehicleId);
+      if (pres) {
+        const presMs = parseIsoMs(pres.ts);
+        if (pres.online === false && now - presMs <= ONLINE_TTL_MS) continue;
+      }
+
+      out.push(p);
     }
 
     return out;
-  }, [events, now]);
+  }, [latestPointById, latestPresenceById, now]);
+
+  // ✅ search in ALL latest points (online + offline)
+  const vehiclesForSearch = React.useMemo(() => Array.from(latestPointById.values()), [latestPointById]);
 
   const onlineCount = vehiclesOnline.length;
   const offlineCount = Math.max(0, FLEET_TOTAL - onlineCount);
 
-  const lastOrderIds = React.useMemo(() => {
-    const ids: string[] = [];
-    for (let i = events.length - 1; i >= 0; i -= 1) {
-      const e = events[i]!;
-      if (!isOrderEvent(e)) continue;
-      const id = getOrderId(e);
-      if (!id) continue;
-      ids.push(id);
-      if (ids.length >= 8) break;
+  const selectedVehicle = selectedVehicleId ? fleetById.get(selectedVehicleId) ?? null : null;
+
+  const selectedDriverStatus: DriverUiStatus = React.useMemo(() => {
+    if (!selectedVehicleId) return "OFFLINE";
+
+    // 1) OFFLINE / ONLINE by last touch
+    const p = latestPointById.get(selectedVehicleId);
+    const pres = latestPresenceById.get(selectedVehicleId);
+
+    const pMs = p ? parseIsoMs(p.ts) : 0;
+    const presMs = pres ? parseIsoMs(pres.ts) : 0;
+
+    const hasRecentPoint = !!p && now - pMs <= ONLINE_TTL_MS;
+    const hasRecentOffline = !!pres && pres.online === false && now - presMs <= ONLINE_TTL_MS;
+
+    if (!hasRecentPoint || hasRecentOffline) return "OFFLINE";
+
+    // 2) BUSY if any assigned order for this vehicle is ACTIVE
+    for (const a of latestAssignedByOrderId.values()) {
+      if (a.vehicleId !== selectedVehicleId) continue;
+
+      const st = latestStatusByOrderId.get(a.orderId);
+      const status = st?.status ?? "ASSIGNED";
+
+      if (isActiveOrderStatus(status)) return "BUSY";
     }
-    return ids;
-  }, [events]);
+
+    return "ONLINE";
+  }, [latestAssignedByOrderId, latestPointById, latestPresenceById, latestStatusByOrderId, now, selectedVehicleId]);
+
+  const tel = city?.dispatchPhone ? toTelHref(city.dispatchPhone) : "";
+
+  // ==============================
+  // Map controls state
+  // ==============================
+  const [searchValue, setSearchValue] = React.useState<string>("");
+  const [searchHint, setSearchHint] = React.useState<string>("");
 
   const mapElRef = React.useRef<HTMLDivElement>(null);
-  const mapStatus = useMapboxMap(mapElRef, vehiclesOnline);
+  const mapStatus = useMapboxMap(mapElRef, vehiclesOnline, vehiclesForSearch, (vehicleId) => {
+    setSelectedVehicleId(vehicleId);
+  });
+
+  const computeOnlineStatusForVehicle = React.useCallback(
+    (vehicleId: string): { online: boolean; lastSeenIso: string } | null => {
+      const p = latestPointById.get(vehicleId);
+      if (!p) return null;
+
+      const pres = latestPresenceById.get(vehicleId);
+
+      const pMs = parseIsoMs(p.ts);
+      const presMs = pres ? parseIsoMs(pres.ts) : 0;
+
+      const hasRecentPoint = now - pMs <= ONLINE_TTL_MS;
+      const hasRecentOffline = !!pres && pres.online === false && now - presMs <= ONLINE_TTL_MS;
+
+      return { online: hasRecentPoint && !hasRecentOffline, lastSeenIso: p.ts };
+    },
+    [latestPointById, latestPresenceById, now],
+  );
+
+  const onSubmitSearch = React.useCallback(
+    (ev: React.FormEvent) => {
+      ev.preventDefault();
+
+      const normalized = normalizeIndicativInput(searchValue);
+      if (!normalized) {
+        setSearchHint("Introduce indicativ (ex: 05).");
+        return;
+      }
+
+      const candidates = [normalized, normalized.replace(/^0+/, "")].filter(Boolean);
+
+      let focusedId: string | null = null;
+      for (const cand of candidates) {
+        if (mapStatus.focusVehicle(cand)) {
+          focusedId = cand;
+          break;
+        }
+      }
+
+      if (!focusedId) {
+        setSearchHint(`Indicativ negăsit: ${normalized} (nu există locație în stream)`);
+        return;
+      }
+
+      const snap = computeOnlineStatusForVehicle(focusedId);
+      if (!snap) {
+        setSearchHint(`Indicativ găsit: ${focusedId} — fără lastSeen (unexpected)`);
+        return;
+      }
+
+      const lastSeen = fmtIsoLocal(snap.lastSeenIso);
+      const age = fmtAge(now, snap.lastSeenIso);
+
+      setSearchHint(
+        snap.online
+          ? `Indicativ ${focusedId}: ONLINE · last seen ${age} ago (${lastSeen})`
+          : `Indicativ ${focusedId}: OFFLINE · last seen ${age} ago (${lastSeen})`,
+      );
+    },
+    [computeOnlineStatusForVehicle, mapStatus, now, searchValue],
+  );
+
+  const onReset = React.useCallback(() => {
+    mapStatus.resetView();
+    setSearchHint("");
+  }, [mapStatus]);
 
   return (
     <div className={shell.root}>
       <div className={shell.topBar}>
         <h1 className={shell.title}>OPS / Map</h1>
+
+        <div className={shell.mapControls}>
+          <form className={shell.mapSearchForm} onSubmit={onSubmitSearch} role="search" aria-label="Caută indicativ">
+            <input
+              className={`${shell.mapSearchInput} ${shell.mono}`}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              inputMode="numeric"
+              placeholder="Caută indicativ (ex: 05)"
+              aria-label="Indicativ"
+            />
+            <button className={`${shell.mapBtn} ${shell.mapBtnPrimary}`} type="submit">
+              Caută
+            </button>
+          </form>
+
+          <button className={shell.mapBtn} type="button" onClick={onReset}>
+            Reset map
+          </button>
+
+          {searchHint ? (
+            <span className={shell.mapHint} role="status" aria-live="polite">
+              {searchHint}
+            </span>
+          ) : null}
+        </div>
 
         <div className={shell.meta}>
           <span className={shell.pill}>
@@ -348,6 +804,26 @@ export default function OpsMapPage(): React.JSX.Element {
           <span className={shell.pill}>fleet total: {FLEET_TOTAL}</span>
           <span className={shell.pill}>online: {onlineCount}</span>
           <span className={shell.pill}>offline: {offlineCount}</span>
+
+          <span className={shell.pill}>
+            events: <span className={shell.mono}>{events.length}</span>
+          </span>
+          <span className={shell.pill}>
+            lastPoints: <span className={shell.mono}>{latestPointById.size}</span>
+          </span>
+          <span className={shell.pill}>
+            lastPresence: <span className={shell.mono}>{latestPresenceById.size}</span>
+          </span>
+
+          {fleetError ? <span className={shell.pill}>fleet: error</span> : <span className={shell.pill}>fleet: ok</span>}
+          {cityError ? <span className={shell.pill}>city: error</span> : <span className={shell.pill}>city: ok</span>}
+          {tel ? (
+            <a className={`${shell.pill} ${shell.mono}`} href={tel}>
+              dispatch: {city?.dispatchPhone}
+            </a>
+          ) : null}
+          {lastError ? <span className={shell.pill}>error: {lastError}</span> : <span className={shell.pill}>error: —</span>}
+          {mapStatus.error ? <span className={shell.pill}>map: error</span> : <span className={shell.pill}>map: ok</span>}
         </div>
       </div>
 
@@ -360,6 +836,8 @@ export default function OpsMapPage(): React.JSX.Element {
 
           <div className={shell.panelBody}>
             {mapStatus.error ? <p className={shell.mono}>map error: {mapStatus.error}</p> : null}
+            {fleetError ? <p className={shell.mono}>fleet error: {fleetError}</p> : null}
+            {cityError ? <p className={shell.mono}>city error: {cityError}</p> : null}
 
             <div className={shell.mapCanvas}>
               <div ref={mapElRef} className={shell.mapFill} />
@@ -374,30 +852,45 @@ export default function OpsMapPage(): React.JSX.Element {
           </div>
 
           <div className={shell.panelBody}>
-            <div className={shell.meta} style={{ display: "grid", gap: 12 }}>
-              <span className={shell.pill}>order.created: {counts.created}</span>
-              <span className={shell.pill}>order.statusChanged: {counts.statusChanged}</span>
+            <div className={shell.hudGrid}>
               <span className={shell.pill}>vehicle.online: {onlineCount}</span>
               <span className={shell.pill}>vehicle.offline: {offlineCount}</span>
               {lastError ? <span className={shell.pill}>error: {lastError}</span> : <span className={shell.pill}>error: —</span>}
             </div>
 
-            <div style={{ height: 16 }} />
+            <div className={shell.spacerSm} />
 
-            <h3 className={shell.panelTitle} style={{ fontSize: 14 }}>
-              Last orders
-            </h3>
+            <h3 className={shell.hudSubTitle}>Selected vehicle</h3>
 
-            {lastOrderIds.length === 0 ? (
-              <p>—</p>
+            {selectedVehicle ? (
+              <div className={shell.selectedCard}>
+                <div className={shell.selectedRow}>
+                  <span className={shell.selectedLabel}>Indicativ</span>
+                  <span className={`${shell.selectedValue} ${shell.mono}`}>{selectedVehicle.vehicleId}</span>
+                </div>
+
+                <div className={shell.selectedRow}>
+                  <span className={shell.selectedLabel}>Nr</span>
+                  <span className={`${shell.selectedValue} ${shell.mono}`}>{selectedVehicle.plateNumber}</span>
+                </div>
+
+                <div className={shell.selectedRow}>
+                  <span className={shell.selectedLabel}>Șofer</span>
+                  <span className={shell.selectedValue}>{selectedVehicle.driverName}</span>
+                </div>
+
+                <div className={shell.selectedRow}>
+                  <span className={shell.selectedLabel}>Status șofer</span>
+                  <span className={`${shell.selectedValue} ${shell.mono}`}>{selectedDriverStatus}</span>
+                </div>
+
+                <div className={shell.selectedRow}>
+                  <span className={shell.selectedLabel}>Mașină</span>
+                  <span className={shell.selectedValue}>{selectedVehicle.carModel}</span>
+                </div>
+              </div>
             ) : (
-              <ul>
-                {lastOrderIds.map((id) => (
-                  <li key={id} className={shell.mono}>
-                    {id}
-                  </li>
-                ))}
-              </ul>
+              <p className={shell.selectedHint}>Click pe un marker pentru detalii (indicativ / nr / șofer / model).</p>
             )}
           </div>
         </aside>
