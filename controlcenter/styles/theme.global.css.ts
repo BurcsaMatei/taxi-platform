@@ -5,7 +5,7 @@
 // ==============================
 import { globalStyle } from "@vanilla-extract/css";
 
-import { themeClassDark, themeClassLight, vars } from "./theme.css";
+import { themeClassDark, themeClassLight, vars } from "@taxi/tokens";
 
 // ==============================
 // Global styles
@@ -48,7 +48,7 @@ globalStyle("p", { marginBlock: vars.space.md });
 /* Layout helpers: .container / .section */
 globalStyle(".container", {
   width: "100%",
-  maxWidth: vars.layout.max.lg, // <— folosește tokens reale: layout.max.{md,lg,xl}
+  maxWidth: vars.layout.max.lg,
   marginLeft: "auto",
   marginRight: "auto",
   paddingLeft: vars.space.md,

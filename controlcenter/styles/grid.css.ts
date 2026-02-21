@@ -5,7 +5,7 @@
 // ==============================
 import { style } from "@vanilla-extract/css";
 
-import { mq } from "./theme.css";
+import { mq } from "@taxi/tokens";
 
 // ==============================
 // Classes

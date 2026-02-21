@@ -5,7 +5,7 @@
 // ==============================
 import { createVar, style, styleVariants } from "@vanilla-extract/css";
 
-import { vars } from "./theme.css";
+import { vars } from "@taxi/tokens";
 
 // ==============================
 // Tokens & utilities

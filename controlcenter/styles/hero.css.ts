@@ -5,7 +5,7 @@
 // ==============================
 import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 
-import { themeClassLight, vars } from "./theme.css";
+import { themeClassLight, vars } from "@taxi/tokens";
 
 // ==============================
 // Keyframes
