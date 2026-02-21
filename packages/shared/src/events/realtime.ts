@@ -10,6 +10,9 @@ import type { ServiceTypeCode } from "../domain/service.js";
 export type RealtimeEventName =
   | "order.created"
   | "order.statusChanged"
+  | "order.assigned"
+  | "order.dispatchFailed"
+  | "order.userCalledDispatch"
   | "vehicle.locationUpdated"
   | "vehicle.presenceChanged";
 
@@ -28,6 +31,35 @@ export type OrderStatusChangedPayload = {
   service: ServiceTypeCode;
   fromStatus: OrderStatus;
   toStatus: OrderStatus;
+};
+
+export type OrderAssignedPayload = {
+  orderId: string;
+  cityId: string;
+  service: ServiceTypeCode;
+  vehicleId: string; // indicativ (ex: "01")
+  distanceMeters?: number;
+};
+
+export type OrderDispatchFailedReason = "NO_AVAILABLE_VEHICLE";
+
+export type OrderDispatchFailedPayload = {
+  orderId: string;
+  cityId: string;
+  service: ServiceTypeCode;
+  reason: OrderDispatchFailedReason;
+};
+
+export type OrderCallTarget = "DISPATCH";
+export type OrderCallSource = "USER_APP" | "DRIVER_APP" | "CONTROL_CENTER";
+
+export type OrderUserCalledDispatchPayload = {
+  orderId: string;
+  cityId: string;
+  service: ServiceTypeCode;
+  target: OrderCallTarget; // "DISPATCH"
+  phoneNumber: string; // numărul dispeceratului afișat userului
+  source: OrderCallSource; // ex: "USER_APP"
 };
 
 export type VehicleLocationUpdatedPayload = {
@@ -56,6 +88,21 @@ export type RealtimeEnvelope =
       payload: OrderStatusChangedPayload;
     }
   | {
+      name: "order.assigned";
+      ts: string; // ISO
+      payload: OrderAssignedPayload;
+    }
+  | {
+      name: "order.dispatchFailed";
+      ts: string; // ISO
+      payload: OrderDispatchFailedPayload;
+    }
+  | {
+      name: "order.userCalledDispatch";
+      ts: string; // ISO
+      payload: OrderUserCalledDispatchPayload;
+    }
+  | {
       name: "vehicle.locationUpdated";
       ts: string; // ISO
       payload: VehicleLocationUpdatedPayload;
@@ -79,6 +126,20 @@ export function makeOrderCreatedEnvelope(payload: OrderCreatedPayload): Realtime
 
 export function makeOrderStatusChangedEnvelope(payload: OrderStatusChangedPayload): RealtimeEnvelope {
   return { name: "order.statusChanged", ts: nowIso(), payload };
+}
+
+export function makeOrderAssignedEnvelope(payload: OrderAssignedPayload): RealtimeEnvelope {
+  return { name: "order.assigned", ts: nowIso(), payload };
+}
+
+export function makeOrderDispatchFailedEnvelope(payload: OrderDispatchFailedPayload): RealtimeEnvelope {
+  return { name: "order.dispatchFailed", ts: nowIso(), payload };
+}
+
+export function makeOrderUserCalledDispatchEnvelope(
+  payload: OrderUserCalledDispatchPayload,
+): RealtimeEnvelope {
+  return { name: "order.userCalledDispatch", ts: nowIso(), payload };
 }
 
 export function makeVehicleLocationUpdatedEnvelope(payload: VehicleLocationUpdatedPayload): RealtimeEnvelope {

@@ -126,7 +126,112 @@ export const mapFill = style({
 });
 
 // ==============================
+// Map controls (search + reset)
+// ==============================
+export const mapControls = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space.md,
+  flexWrap: "wrap",
+});
+
+export const mapSearchForm = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space.md,
+});
+
+export const mapSearchInput = style({
+  height: 36,
+  minWidth: 220,
+  paddingInline: vars.space.md,
+  borderRadius: vars.radius.md,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.surface,
+  color: vars.color.text,
+  outline: "none",
+});
+
+export const mapBtn = style({
+  height: 36,
+  paddingInline: vars.space.lg,
+  borderRadius: vars.radius.md,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.surface,
+  color: vars.color.text,
+  fontWeight: 800,
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+});
+
+export const mapBtnPrimary = style({
+  background: vars.color.surfaceHover,
+});
+
+export const mapHint = style({
+  fontSize: "0.875rem",
+  color: vars.color.muted,
+  fontWeight: 800,
+  whiteSpace: "nowrap",
+});
+
+// ==============================
+// HUD helpers (no inline styles)
+// ==============================
+export const hudGrid = style({
+  display: "grid",
+  gap: 12,
+});
+
+export const spacerSm = style({
+  height: 16,
+});
+
+export const hudSubTitle = style({
+  margin: 0,
+  fontSize: 14,
+  fontWeight: 800,
+});
+
+// ==============================
+// Selected vehicle card
+// ==============================
+export const selectedCard = style({
+  borderRadius: vars.radius.md,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.surface,
+  padding: vars.space.lg,
+  display: "grid",
+  gap: vars.space.md,
+});
+
+export const selectedRow = style({
+  display: "grid",
+  gridTemplateColumns: "120px 1fr",
+  gap: vars.space.md,
+  alignItems: "baseline",
+  fontSize: "0.875rem",
+});
+
+export const selectedLabel = style({
+  color: vars.color.muted,
+  fontWeight: 800,
+});
+
+export const selectedValue = style({
+  color: vars.color.text,
+  fontWeight: 800,
+});
+
+export const selectedHint = style({
+  margin: 0,
+  color: vars.color.muted,
+  fontSize: "0.875rem",
+});
+
+// ==============================
 // Taxi marker (Mapbox Marker element)
+// (kept for future; current map uses symbol layer)
 // ==============================
 export const taxiMarker = style({
   position: "relative",

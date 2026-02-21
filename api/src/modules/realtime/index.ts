@@ -11,35 +11,39 @@ import type { RealtimeHub } from "./wsServer.js";
 // ==============================
 type TopicPrefix = "city:" | "order:" | "driver:" | "vehicle:" | "controlcenter:";
 
-const ALLOWED_BY_PREFIX: Readonly<Record<TopicPrefix, ReadonlySet<RealtimeEnvelope["name"]>>> =
-  {
-    "city:": new Set<RealtimeEnvelope["name"]>(["order.created"]),
-    "order:": new Set<RealtimeEnvelope["name"]>(["order.statusChanged"]),
-    "driver:": new Set<RealtimeEnvelope["name"]>([]),
+const ALLOWED_BY_PREFIX: Readonly<Record<TopicPrefix, ReadonlySet<RealtimeEnvelope["name"]>>> = {
+  "city:": new Set<RealtimeEnvelope["name"]>(["order.created"]),
 
-    // ✅ per-vehicle stream (optional dar recomandat)
-    "vehicle:": new Set<RealtimeEnvelope["name"]>(["vehicle.locationUpdated"]),
+  "order:": new Set<RealtimeEnvelope["name"]>([
+    "order.statusChanged",
+    "order.assigned",
+    "order.dispatchFailed",
+    "order.userCalledDispatch",
+  ]),
 
-    // ✅ controlcenter trebuie să primească și locationUpdated
-    "controlcenter:": new Set<RealtimeEnvelope["name"]>([
-      "order.created",
-      "order.statusChanged",
-      "vehicle.locationUpdated",
-    ]),
-  };
+  "driver:": new Set<RealtimeEnvelope["name"]>([]),
+
+  // ✅ per-vehicle stream (location + presence)
+  "vehicle:": new Set<RealtimeEnvelope["name"]>(["vehicle.locationUpdated", "vehicle.presenceChanged"]),
+
+  // ✅ controlcenter primește și presence + assigned + dispatchFailed + call intent
+  "controlcenter:": new Set<RealtimeEnvelope["name"]>([
+    "order.created",
+    "order.statusChanged",
+    "order.assigned",
+    "order.dispatchFailed",
+    "order.userCalledDispatch",
+    "vehicle.locationUpdated",
+    "vehicle.presenceChanged",
+  ]),
+};
 
 function topicPrefix(topic: RealtimeTopic): TopicPrefix | null {
   const idx = topic.indexOf(":");
   if (idx < 0) return null;
   const p = (topic.slice(0, idx + 1) + "") as string;
 
-  if (
-    p === "city:" ||
-    p === "order:" ||
-    p === "driver:" ||
-    p === "vehicle:" ||
-    p === "controlcenter:"
-  ) {
+  if (p === "city:" || p === "order:" || p === "driver:" || p === "vehicle:" || p === "controlcenter:") {
     return p;
   }
   return null;
