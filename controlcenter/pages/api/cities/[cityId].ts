@@ -88,7 +88,12 @@ export default async function handler(
     }
 
     const d = data as Partial<CityResponseOk>;
-    if (!d.ok || !d.city || typeof d.city !== "object" || typeof (d.city as { id?: unknown }).id !== "string") {
+    if (
+      !d.ok ||
+      !d.city ||
+      typeof d.city !== "object" ||
+      typeof (d.city as { id?: unknown }).id !== "string"
+    ) {
       res.status(502).json({ ok: false, error: "Upstream returned unexpected shape" });
       return;
     }

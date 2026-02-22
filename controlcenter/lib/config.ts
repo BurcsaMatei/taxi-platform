@@ -6,7 +6,8 @@
 function isDev(): boolean {
   return typeof process !== "undefined" && process.env?.NODE_ENV !== "production";
 }
-function devWarn(msg: string, ...args: unknown[]) {
+
+function devWarn(msg: string, ...args: unknown[]): void {
   if (isDev()) {
     // eslint-disable-next-line no-console
     console.warn(`[config.ts] ${msg}`, ...args);
@@ -17,6 +18,7 @@ function devWarn(msg: string, ...args: unknown[]) {
 // Warn-once (no spam in build logs)
 // ==============================
 let didWarnMissingSiteUrl = false;
+
 function warnMissingSiteUrlOnce(): void {
   if (didWarnMissingSiteUrl) return;
   didWarnMissingSiteUrl = true;
@@ -25,12 +27,29 @@ function warnMissingSiteUrlOnce(): void {
 }
 
 // ==============================
-// Helpers (parsing & normalize)
+// Helpers (normalize / urls)
 // ==============================
-function parseBool(val: string | undefined, fallback = false): boolean {
-  if (!val) return fallback;
-  const v = val.trim().toLowerCase();
-  return v === "true" || v === "1" || v === "yes" || v === "y";
+function ensureLeadingSlash(s: string): string {
+  if (!s) return "/";
+  return s.startsWith("/") ? s : `/${s}`;
+}
+
+function isExternal(url: string): boolean {
+  return /^https?:\/\//i.test(url) || url.startsWith("//");
+}
+
+function isSpecialProtocol(url: string): boolean {
+  return /^(mailto:|tel:|sms:|data:|javascript:)/i.test(url);
+}
+
+function isQueryOrHash(path: string): boolean {
+  return path.startsWith("?") || path.startsWith("#");
+}
+
+function joinUrl(base: string, path: string): string {
+  const b = base.replace(/\/+$/, "");
+  const p = ensureLeadingSlash(path);
+  return `${b}${p}`;
 }
 
 function normalizeUrl(
@@ -40,11 +59,13 @@ function normalizeUrl(
   if (!val) return "";
   const s = val.trim();
   if (!s) return "";
+
   const hasProtocol = /^https?:\/\//i.test(s) || s.startsWith("//");
   if (requireProtocol && !hasProtocol) {
     devWarn(`URL fără protocol: "${s}". Așteptam http(s)://…`);
     return "";
   }
+
   if (hasProtocol) return s.replace(/\/+$/, "");
   return s;
 }
@@ -58,33 +79,11 @@ function normalizeBasePath(val: string | undefined): string {
   return `/${raw.replace(/^\/+/, "").replace(/\/+$/, "")}`;
 }
 
-function ensureLeadingSlash(s: string): string {
-  if (!s) return "/";
-  return s.startsWith("/") ? s : `/${s}`;
-}
-
-function isExternal(url: string): boolean {
-  return /^https?:\/\//i.test(url) || url.startsWith("//");
-}
-
-function joinUrl(base: string, path: string): string {
-  const b = base.replace(/\/+$/, "");
-  const p = ensureLeadingSlash(path);
-  return `${b}${p}`;
-}
-
 function applyBasePath(path: string, basePath: string): string {
   if (isExternal(path)) return path;
   const base = basePath && basePath !== "/" ? basePath : "";
   const normalized = ensureLeadingSlash(path);
   return (base + normalized).replace(/\/\/+/g, "/");
-}
-
-function isSpecialProtocol(url: string): boolean {
-  return /^(mailto:|tel:|sms:|data:|javascript:)/i.test(url);
-}
-function isQueryOrHash(path: string): boolean {
-  return path.startsWith("?") || path.startsWith("#");
 }
 
 function normalizeSiteUrl(input: string): string {
@@ -115,7 +114,7 @@ export const SITE_URL =
 const PREFER_TRAILING = /\/$/.test(RAW_ENV_SITE_URL);
 
 // ==============================
-// Site
+// Site (SEO minimal)
 // ==============================
 export const SITE = {
   url: SITE_URL,
@@ -129,7 +128,7 @@ export const SITE = {
 } as const;
 
 // ==============================
-// Theme (centralizat)
+// Theme (meta theme-color / PWA colors)
 // ==============================
 const RAW_PWA_LIGHT = (
   process.env.NEXT_PUBLIC_PWA_THEME_COLOR ||
@@ -141,10 +140,10 @@ const RAW_UI_LIGHT = (process.env.NEXT_PUBLIC_UI_THEME_COLOR_LIGHT || "").trim()
 const RAW_UI_DARK = (process.env.NEXT_PUBLIC_UI_THEME_COLOR_DARK || "").trim();
 
 const DEFAULTS = {
-  pwaLight: "#5561F2", // accent (manifest)
-  pwaDark: "#7b84ff", // accent pentru dark (opțional)
-  uiLight: "#ffffff", // culoare bară UI în light
-  uiDark: "#0b0b0d", // culoare bară UI în dark
+  pwaLight: "#5561F2",
+  pwaDark: "#7b84ff",
+  uiLight: "#ffffff",
+  uiDark: "#0b0b0d",
 };
 
 export const THEME = {
@@ -159,35 +158,10 @@ export const THEME = {
 } as const;
 
 // ==============================
-// Contact
-// ==============================
-export const CONTACT = {
-  enabled: parseBool(process.env.NEXT_PUBLIC_CONTACT_ENABLED, false),
-  email: (process.env.NEXT_PUBLIC_CONTACT_EMAIL || "").trim(),
-  phone: (process.env.NEXT_PUBLIC_CONTACT_PHONE || "").trim(),
-  address: {
-    street: (process.env.NEXT_PUBLIC_CONTACT_STREET || "").trim(),
-    city: (process.env.NEXT_PUBLIC_CONTACT_CITY || "").trim(),
-    region: (process.env.NEXT_PUBLIC_CONTACT_REGION || "").trim(),
-    postal: (process.env.NEXT_PUBLIC_CONTACT_POSTAL || "").trim(),
-    country: (process.env.NEXT_PUBLIC_CONTACT_COUNTRY || "").trim(),
-  },
-  mapEmbed: (process.env.NEXT_PUBLIC_CONTACT_MAP_EMBED || "").trim(),
-} as const;
-
-// ==============================
-// Social
-// ==============================
-export const SOCIAL_URLS = {
-  facebook: normalizeUrl(process.env.NEXT_PUBLIC_FB_URL, { requireProtocol: true }),
-  instagram: normalizeUrl(process.env.NEXT_PUBLIC_IG_URL, { requireProtocol: true }),
-  tiktok: normalizeUrl(process.env.NEXT_PUBLIC_TT_URL, { requireProtocol: true }),
-} as const;
-
-// ==============================
 // Path / Assets
 // ==============================
 export const BASE_PATH = normalizeBasePath(process.env.NEXT_PUBLIC_BASE_PATH);
+
 export const ASSET_BASE = normalizeUrl(process.env.NEXT_PUBLIC_ASSET_BASE, {
   requireProtocol: true,
 }); // ex: https://cdn.exemplu.com
@@ -204,9 +178,13 @@ export function withBase(path: string): string {
 function alignTrailingSlash(pathname: string): string {
   if (!pathname) return "/";
   const ensureLeading = ensureLeadingSlash(pathname);
+
   if (PREFER_TRAILING) return ensureLeading.endsWith("/") ? ensureLeading : `${ensureLeading}/`;
-  if (ensureLeading !== "/" && ensureLeading.endsWith("/"))
+
+  if (ensureLeading !== "/" && ensureLeading.endsWith("/")) {
     return ensureLeading.replace(/\/+$/, "");
+  }
+
   return ensureLeading;
 }
 
@@ -216,6 +194,7 @@ export function canonical(pathname: string): string {
     return pathname;
   }
   if (isExternal(pathname)) return pathname;
+
   const pathWithBase = withBase(pathname);
   const normalized = alignTrailingSlash(pathWithBase);
   return joinUrl(SITE.url, normalized);
@@ -246,8 +225,7 @@ export function absoluteUrl(path: string): string {
   const main: string = cut === -1 ? path : path.slice(0, cut);
   const suffix: string = cut === -1 ? "" : path.slice(cut);
 
-  const withBaseNoQuery = (p: string): string => applyBasePath(p, BASE_PATH);
-  const mainWithBase = withBaseNoQuery(main);
+  const mainWithBase = applyBasePath(main, BASE_PATH);
   return joinUrl(SITE.url, mainWithBase) + suffix;
 }
 
@@ -279,25 +257,6 @@ export const SEO_DEFAULTS = {
   ogImage: SITE.ogImage,
   twitterHandle: SITE.twitterHandle,
 } as const;
-
-// ==============================
-// Sitemap / Routes
-// ==============================
-export const SITEMAPS = [
-  "/sitemap.xml", // index
-  "/sitemap-pages.xml", // pagini non-blog
-  "/sitemap-posts.xml", // articole blog
-] as const;
-
-export const STATIC_ROUTES = [
-  "/",
-  "/concept",
-  "/portfolio",
-  "/marketplace",
-  "/auctions",
-  "/blog",
-  "/cookie-policy",
-] as const;
 
 // ==============================
 // Compat exporturi

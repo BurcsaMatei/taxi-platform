@@ -3,9 +3,8 @@
 // ==============================
 // Imports
 // ==============================
-import { style } from "@vanilla-extract/css";
-
 import { mq } from "@taxi/tokens";
+import { style } from "@vanilla-extract/css";
 
 // ==============================
 // Classes

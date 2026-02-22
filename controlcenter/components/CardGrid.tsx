@@ -1,10 +1,15 @@
 // components/CardGrid.tsx
 
+// ==============================
+// Imports
+// ==============================
 import { withBase } from "../lib/config";
-import Appear from "./animations/Appear";
 import Card from "./Card";
 import Grid from "./Grid";
 
+// ==============================
+// Types
+// ==============================
 export type GalleryCard = {
   src: string;
   alt: string;
@@ -27,8 +32,8 @@ export default function CardGrid({
   onItemClick,
   aboveTheFold = false,
   priorityCount = 6,
-}: Props) {
-  const handleActivate = (i: number) => onItemClick?.(i);
+}: Props): JSX.Element {
+  const handleActivate = (i: number): void => onItemClick?.(i);
 
   return (
     <Grid gap="16px" align="stretch" justify="stretch" mode="fluid" minCol={240}>
@@ -42,12 +47,7 @@ export default function CardGrid({
             : ({} as const);
 
         return (
-          <Appear
-            as="div"
-            key={`${c.href ?? c.src}-${i}`}
-            style={{ height: "100%" }}
-            delay={0.1 * i}
-          >
+          <div key={`${c.href ?? c.src}-${i}`}>
             <Card
               title={c.alt || "Imagine"}
               image={{ src: c.src, alt: c.alt, priority }}
@@ -55,7 +55,7 @@ export default function CardGrid({
               {...(c.caption ? { excerpt: c.caption } : {})}
               {...interactiveProps}
             />
-          </Appear>
+          </div>
         );
       })}
     </Grid>

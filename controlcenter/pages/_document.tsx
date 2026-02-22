@@ -3,6 +3,7 @@
 // ==============================
 // Imports
 // ==============================
+import { themeClassDark, themeClassLight } from "@taxi/tokens";
 import Document, {
   type DocumentContext,
   type DocumentInitialProps,
@@ -13,7 +14,6 @@ import Document, {
 } from "next/document";
 
 import { SITE, THEME, withBase } from "../lib/config";
-import { themeClassDark, themeClassLight } from "@taxi/tokens";
 
 // ==============================
 // Utils

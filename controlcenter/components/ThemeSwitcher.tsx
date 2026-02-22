@@ -4,10 +4,10 @@
 // ==============================
 // Imports
 // ==============================
+import { themeClasses } from "@taxi/tokens";
 import { type CSSProperties, useEffect, useState } from "react";
 
 import { withBase } from "../lib/config";
-import { themeClasses } from "@taxi/tokens";
 import * as styles from "../styles/themeSwitcher.css";
 
 // ==============================

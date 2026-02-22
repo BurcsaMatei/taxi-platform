@@ -504,7 +504,12 @@ export default function OpsOrdersPage(): React.JSX.Element {
     (r: OrderRow): VehicleUiStatus | "—" => {
       if (!r.indicativ) return "—";
 
-      const online = computeVehicleOnlineNow(r.indicativ, nowMs, latestPointById, latestPresenceById);
+      const online = computeVehicleOnlineNow(
+        r.indicativ,
+        nowMs,
+        latestPointById,
+        latestPresenceById,
+      );
       if (!online) return "OFFLINE";
 
       return busyVehicleIds.has(r.indicativ) ? "BUSY" : "AVAILABLE";
@@ -632,7 +637,9 @@ export default function OpsOrdersPage(): React.JSX.Element {
                               <span className={t.badge}>
                                 <span className={t.cellMono}>FAILED</span>
                               </span>
-                              <span className={t.small}>{r.dispatchReason ?? "NO_AVAILABLE_VEHICLE"}</span>
+                              <span className={t.small}>
+                                {r.dispatchReason ?? "NO_AVAILABLE_VEHICLE"}
+                              </span>
                             </div>
                           )}
                         </td>
@@ -646,7 +653,8 @@ export default function OpsOrdersPage(): React.JSX.Element {
                                 <span className={t.cellMono}>CALLED</span>
                               </span>
                               <span className={t.small}>
-                                {called.date} {called.time} · {r.calledPhone ?? "—"} · {r.calledSource ?? "USER_APP"}
+                                {called.date} {called.time} · {r.calledPhone ?? "—"} ·{" "}
+                                {r.calledSource ?? "USER_APP"}
                               </span>
                             </div>
                           )}
