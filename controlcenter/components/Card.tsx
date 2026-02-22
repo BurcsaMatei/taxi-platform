@@ -3,6 +3,7 @@
 // ==============================
 // Imports
 // ==============================
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 import {
@@ -13,11 +14,15 @@ import {
   excerptClass,
   imageWrap,
   linkReset,
+  mediaImgCover,
+  mediaRatio_1_1,
+  mediaRatio_3_2,
+  mediaRatio_4_3,
+  mediaRatio_16_9,
   metaRow,
   titleClass,
 } from "../styles/card.css";
 import SmartLink from "./SmartLink";
-import Img from "./ui/Img";
 
 // ==============================
 // Types
@@ -66,9 +71,26 @@ type ShellCardProps = {
 type Props = ContentCardProps | ShellCardProps;
 
 // ==============================
+// Utils
+// ==============================
+function ratioClass(ratio: `${number}/${number}`): string {
+  switch (ratio) {
+    case "1/1":
+      return mediaRatio_1_1;
+    case "3/2":
+      return mediaRatio_3_2;
+    case "16/9":
+      return mediaRatio_16_9;
+    case "4/3":
+    default:
+      return mediaRatio_4_3;
+  }
+}
+
+// ==============================
 // Component
 // ==============================
-export default function Card(props: Props) {
+export default function Card(props: Props): JSX.Element {
   // ============================
   // Shell mode
   // ============================
@@ -119,13 +141,14 @@ export default function Card(props: Props) {
   } = props;
 
   const media = image ? (
-    <div className={imageWrap} style={{ aspectRatio: mediaRatio }}>
-      <Img
+    <div className={`${imageWrap} ${ratioClass(mediaRatio)}`}>
+      <Image
         src={image.src}
         alt={image.alt}
-        variant="card"
-        fit="cover"
-        {...(image.priority ? ({ priority: true } as const) : {})}
+        fill
+        sizes="(max-width: 900px) 100vw, 480px"
+        className={mediaImgCover}
+        priority={Boolean(image.priority)}
       />
     </div>
   ) : null;

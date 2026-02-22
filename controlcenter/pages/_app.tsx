@@ -7,26 +7,15 @@
 import "../styles/globals.css";
 import "../styles/theme.global.css"; // mapează tokens → elemente
 
-import type { AppProps } from "next/app";
-import dynamic from "next/dynamic";
-import { createContext, useContext, useEffect, useState } from "react";
-
-// App providers / layout
-import CookieProvider from "../components/cookies/CookieProvider";
-import Layout from "../components/Layout";
-// ---- type-only imports pentru a DERIVA exact props-urile componentelor (nu intră în bundle)
-import type ServiceWorkerRegisterComponent from "../components/ServiceWorkerRegister";
-// Helpers config
-import { withBase } from "../lib/config";
-// Container scope + tema implicită (Vanilla Extract) — wrapper global permis
-import { containerThemeDefault, pageScope } from "../styles/container.css";
 // Theme classes (Vanilla Extract) — DIRECT din tokens (fără shim)
 import { themeClassDark, themeClassLight } from "@taxi/tokens";
+import type { AppProps } from "next/app";
+import { createContext, useContext, useEffect, useState } from "react";
 
-type ServiceWorkerRegisterProps = React.ComponentProps<typeof ServiceWorkerRegisterComponent>;
-
-import type InstallAppButtonComponent from "../components/InstallAppButton";
-type InstallAppButtonProps = React.ComponentProps<typeof InstallAppButtonComponent>;
+// App layout
+import Layout from "../components/Layout";
+// Container scope + tema implicită a containerului — wrapper global permis
+import { containerThemeDefault, pageScope } from "../styles/container.css";
 
 // ==============================
 // Constante & Utils (SSR-safe)
@@ -36,24 +25,6 @@ type ThemeMode = "light" | "dark";
 const THEME_KEY = "theme" as const;
 const PREFERS_DARK_QUERY = "(prefers-color-scheme: dark)" as const;
 const isProd = process.env.NODE_ENV === "production";
-
-// === PWA gating (build-time) ===
-const ENABLE_PWA = process.env.NEXT_PUBLIC_ENABLE_PWA === "1" && isProd;
-
-// Definim referințe care vor primi componentele doar când PWA este ON la build.
-let ServiceWorkerRegisterDynamic: React.ComponentType<ServiceWorkerRegisterProps> | null = null;
-let InstallAppButtonDynamic: React.ComponentType<InstallAppButtonProps> | null = null;
-
-if (ENABLE_PWA) {
-  ServiceWorkerRegisterDynamic = dynamic<ServiceWorkerRegisterProps>(
-    () => import("../components/ServiceWorkerRegister"),
-    { ssr: false },
-  );
-  InstallAppButtonDynamic = dynamic<InstallAppButtonProps>(
-    () => import("../components/InstallAppButton"),
-    { ssr: false },
-  );
-}
 
 /** Dev-only warning (nu poluează consola în producție) */
 function devWarn(message: string): void {
@@ -107,9 +78,9 @@ export function useTheme(): ThemeContextValue {
 // ==============================
 // Component
 // ==============================
-export default function App({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps }: AppProps): JSX.Element {
   const [theme, setTheme] = useState<ThemeMode>("light");
-  const [userOverride, setUserOverride] = useState<boolean>(false); // true dacă userul a setat manual în localStorage
+  const [userOverride, setUserOverride] = useState<boolean>(false);
 
   // 1) Init din localStorage / system preference (SSR-safe)
   useEffect(() => {
@@ -143,10 +114,12 @@ export default function App({ Component, pageProps }: AppProps) {
       mq.addEventListener("change", onChange);
       return () => mq.removeEventListener("change", onChange);
     }
+
     const legacy = mq as unknown as {
       addListener?: (cb: () => void) => void;
       removeListener?: (cb: () => void) => void;
     };
+
     if (typeof legacy.addListener === "function" && typeof legacy.removeListener === "function") {
       legacy.addListener(onChange);
       return () => legacy.removeListener!(onChange);
@@ -163,6 +136,7 @@ export default function App({ Component, pageProps }: AppProps) {
         setUserOverride(true);
       }
     };
+
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
@@ -170,7 +144,7 @@ export default function App({ Component, pageProps }: AppProps) {
   // 4) Aplică tema pe <html> (semantic + clase VE) și persistă (SSR-safe)
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const root = document.documentElement; // <html>
+    const root = document.documentElement;
 
     root.classList.remove("light", "dark", themeClassLight, themeClassDark);
     root.setAttribute("data-theme", theme);
@@ -185,37 +159,20 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [theme]);
 
   return (
-    <CookieProvider>
-      <ThemeContext.Provider
-        value={{
-          theme,
-          setTheme,
-          userOverride,
-          setUserOverride,
-          toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
-        }}
-      >
-        {/* Scope global + tema implicită a containerului → afectează toate <section>-urile */}
-        <div className={`${pageScope} ${containerThemeDefault}`}>
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </div>
-
-        {/* Service worker — ON doar în producție + NEXT_PUBLIC_ENABLE_PWA=1 */}
-        {ENABLE_PWA && ServiceWorkerRegisterDynamic && (
-          <ServiceWorkerRegisterDynamic
-            swUrl={withBase("/sw.js")}
-            scope={withBase("/")}
-            autoReloadOnUpdate
-            updateOn="visibilitychange"
-            debug={!isProd}
-          />
-        )}
-
-        {/* Buton instalare PWA — chunk încărcat doar când PWA e permis */}
-        {ENABLE_PWA && InstallAppButtonDynamic && <InstallAppButtonDynamic />}
-      </ThemeContext.Provider>
-    </CookieProvider>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        setTheme,
+        userOverride,
+        setUserOverride,
+        toggle: () => setTheme((t) => (t === "dark" ? "light" : "dark")),
+      }}
+    >
+      <div className={`${pageScope} ${containerThemeDefault}`}>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </div>
+    </ThemeContext.Provider>
   );
 }

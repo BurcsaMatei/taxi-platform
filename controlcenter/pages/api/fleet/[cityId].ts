@@ -91,7 +91,12 @@ export default async function handler(
     }
 
     const d = data as Partial<FleetResponseOk>;
-    if (!d.ok || !Array.isArray(d.vehicles) || typeof d.cityId !== "string" || typeof d.total !== "number") {
+    if (
+      !d.ok ||
+      !Array.isArray(d.vehicles) ||
+      typeof d.cityId !== "string" ||
+      typeof d.total !== "number"
+    ) {
       res.status(502).json({ ok: false, error: "Upstream returned unexpected shape" });
       return;
     }

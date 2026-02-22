@@ -3,95 +3,92 @@
 // ==============================
 // Imports
 // ==============================
+import { vars } from "@taxi/tokens";
 import { style } from "@vanilla-extract/css";
 
-import { vars } from "@taxi/tokens";
-
 // ==============================
-// Classes
+// Styles (base)
 // ==============================
-
-// Card root
 export const cardRoot = style({
-  width: "100%",
-  height: "100%",
+  borderRadius: vars.radius.lg,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.surface,
+  overflow: "hidden",
   display: "grid",
   gridTemplateRows: "auto 1fr",
-  background: vars.color.surface,
-  border: `1px solid ${vars.color.border}`,
-  borderRadius: vars.radius.lg,
-  overflow: "hidden",
-  textDecoration: "none",
-  color: vars.color.text,
-  transition: `box-shadow ${vars.motion.normal} ${vars.motion.easing}`,
-  willChange: "box-shadow",
-  ":hover": { boxShadow: vars.shadow.lg },
+  boxShadow: vars.shadow.sm,
 });
 
-// Media wrapper
 export const imageWrap = style({
-  position: "relative",
   width: "100%",
-  aspectRatio: "16/9",
   overflow: "hidden",
   borderBottom: `1px solid ${vars.color.border}`,
+  background: vars.color.surfaceHover,
 });
 
-// Content wrapper
 export const contentWrap = style({
+  padding: vars.space.lg,
   display: "grid",
-  gap: vars.space.xs,
-  padding: `${vars.space.sm} ${vars.space.md} ${vars.space.md}`,
+  gap: vars.space.md,
 });
 
-// Typography — Title
 export const titleClass = style({
-  fontSize: "1rem",
-  fontWeight: 700,
-  margin: 0,
-  color: vars.color.text,
+  fontSize: vars.typography.size.lg,
+  fontWeight: Number(vars.typography.weight.bold),
+  lineHeight: vars.typography.leading.tight,
 });
 
-// Metadata row
-export const metaRow = style({
-  fontSize: "0.875rem",
-  color: vars.color.muted,
-});
-
-// Excerpt
 export const excerptClass = style({
-  fontSize: "0.95rem",
-  lineHeight: 1.4,
-  color: vars.color.text,
+  fontSize: vars.typography.size.sm,
+  color: vars.color.muted,
+  lineHeight: vars.typography.leading.normal,
 });
 
-// Actions row
-export const actionsRow = style({
-  marginTop: "auto",
+export const metaRow = style({
   display: "flex",
-  gap: vars.space.sm,
+  alignItems: "center",
+  gap: vars.space.md,
+  color: vars.color.muted,
+  fontSize: vars.typography.size.sm,
 });
 
-// Interactive wrappers — Link
+export const actionsRow = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space.md,
+  flexWrap: "wrap",
+});
+
 export const linkReset = style({
-  display: "block",
-  textDecoration: "none",
   color: "inherit",
-  height: "100%",
-  width: "100%", // întindere completă pe lățimea celulei
+  textDecoration: "none",
+  display: "block",
 });
 
-// Interactive wrappers — Button
 export const buttonReset = style({
-  display: "block",
-  border: "none",
-  background: "none",
+  appearance: "none",
+  background: "transparent",
+  border: 0,
   padding: 0,
   margin: 0,
-  textAlign: "inherit",
-  font: "inherit",
   color: "inherit",
+  textAlign: "inherit",
   cursor: "pointer",
-  height: "100%",
-  width: "100%", // întindere completă pe lățimea celulei
+  width: "100%",
 });
+
+// ==============================
+// Media helpers (VE-only)
+// ==============================
+
+export const mediaImgCover = style({
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  display: "block",
+});
+
+export const mediaRatio_1_1 = style({ aspectRatio: "1 / 1" });
+export const mediaRatio_4_3 = style({ aspectRatio: "4 / 3" });
+export const mediaRatio_3_2 = style({ aspectRatio: "3 / 2" });
+export const mediaRatio_16_9 = style({ aspectRatio: "16 / 9" });

@@ -3,9 +3,8 @@
 // ==============================
 // Imports
 // ==============================
-import { globalStyle, style } from "@vanilla-extract/css";
-
 import { vars } from "@taxi/tokens";
+import { globalStyle, style } from "@vanilla-extract/css";
 
 // ==============================
 // Constants

@@ -94,7 +94,8 @@ export function useControlcenterTopicEvents(
   opts?: { wsUrl?: string; maxEvents?: number },
 ): ControlcenterWsState {
   const wsUrl = toWsUrl(opts?.wsUrl);
-  const maxEvents = typeof opts?.maxEvents === "number" && opts.maxEvents > 10 ? opts.maxEvents : MAX_EVENTS;
+  const maxEvents =
+    typeof opts?.maxEvents === "number" && opts.maxEvents > 10 ? opts.maxEvents : MAX_EVENTS;
 
   const topicRef = React.useRef(topic);
   topicRef.current = topic;

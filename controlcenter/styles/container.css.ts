@@ -3,9 +3,8 @@
 // ==============================
 // Imports
 // ==============================
-import { createTheme, createVar, globalStyle, style } from "@vanilla-extract/css";
-
 import { mq, vars } from "@taxi/tokens";
+import { createTheme, createVar, globalStyle, style } from "@vanilla-extract/css";
 
 // ==============================
 // Constante
@@ -40,7 +39,8 @@ export const containerThemeWide = createTheme(containerVars, {
 export const pageScope = style({});
 
 // Selector container (reutilizat)
-const autoContainerSelector = `.${pageScope} section:not(.fullBleed):not([data-full-bleed="true"])` as const;
+const autoContainerSelector =
+  `.${pageScope} section:not(.fullBleed):not([data-full-bleed="true"])` as const;
 
 // Toate <section> din pageScope primesc container (cu opt-out pentru full-bleed)
 globalStyle(autoContainerSelector, {

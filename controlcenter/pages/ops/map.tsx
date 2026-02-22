@@ -324,7 +324,10 @@ function useMapboxMap(
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
     if (!token || token.trim().length === 0) {
-      setState({ ok: false, error: "Missing NEXT_PUBLIC_MAPBOX_TOKEN in controlcenter/.env.local" });
+      setState({
+        ok: false,
+        error: "Missing NEXT_PUBLIC_MAPBOX_TOKEN in controlcenter/.env.local",
+      });
       return;
     }
 
@@ -644,12 +647,15 @@ export default function OpsMapPage(): React.JSX.Element {
   }, [latestPointById, latestPresenceById, now]);
 
   // ✅ search in ALL latest points (online + offline)
-  const vehiclesForSearch = React.useMemo(() => Array.from(latestPointById.values()), [latestPointById]);
+  const vehiclesForSearch = React.useMemo(
+    () => Array.from(latestPointById.values()),
+    [latestPointById],
+  );
 
   const onlineCount = vehiclesOnline.length;
   const offlineCount = Math.max(0, FLEET_TOTAL - onlineCount);
 
-  const selectedVehicle = selectedVehicleId ? fleetById.get(selectedVehicleId) ?? null : null;
+  const selectedVehicle = selectedVehicleId ? (fleetById.get(selectedVehicleId) ?? null) : null;
 
   const selectedDriverStatus: DriverUiStatus = React.useMemo(() => {
     if (!selectedVehicleId) return "OFFLINE";
@@ -677,7 +683,14 @@ export default function OpsMapPage(): React.JSX.Element {
     }
 
     return "ONLINE";
-  }, [latestAssignedByOrderId, latestPointById, latestPresenceById, latestStatusByOrderId, now, selectedVehicleId]);
+  }, [
+    latestAssignedByOrderId,
+    latestPointById,
+    latestPresenceById,
+    latestStatusByOrderId,
+    now,
+    selectedVehicleId,
+  ]);
 
   const tel = city?.dispatchPhone ? toTelHref(city.dispatchPhone) : "";
 
@@ -764,7 +777,12 @@ export default function OpsMapPage(): React.JSX.Element {
         <h1 className={shell.title}>OPS / Map</h1>
 
         <div className={shell.mapControls}>
-          <form className={shell.mapSearchForm} onSubmit={onSubmitSearch} role="search" aria-label="Caută indicativ">
+          <form
+            className={shell.mapSearchForm}
+            onSubmit={onSubmitSearch}
+            role="search"
+            aria-label="Caută indicativ"
+          >
             <input
               className={`${shell.mapSearchInput} ${shell.mono}`}
               value={searchValue}
@@ -815,15 +833,31 @@ export default function OpsMapPage(): React.JSX.Element {
             lastPresence: <span className={shell.mono}>{latestPresenceById.size}</span>
           </span>
 
-          {fleetError ? <span className={shell.pill}>fleet: error</span> : <span className={shell.pill}>fleet: ok</span>}
-          {cityError ? <span className={shell.pill}>city: error</span> : <span className={shell.pill}>city: ok</span>}
+          {fleetError ? (
+            <span className={shell.pill}>fleet: error</span>
+          ) : (
+            <span className={shell.pill}>fleet: ok</span>
+          )}
+          {cityError ? (
+            <span className={shell.pill}>city: error</span>
+          ) : (
+            <span className={shell.pill}>city: ok</span>
+          )}
           {tel ? (
             <a className={`${shell.pill} ${shell.mono}`} href={tel}>
               dispatch: {city?.dispatchPhone}
             </a>
           ) : null}
-          {lastError ? <span className={shell.pill}>error: {lastError}</span> : <span className={shell.pill}>error: —</span>}
-          {mapStatus.error ? <span className={shell.pill}>map: error</span> : <span className={shell.pill}>map: ok</span>}
+          {lastError ? (
+            <span className={shell.pill}>error: {lastError}</span>
+          ) : (
+            <span className={shell.pill}>error: —</span>
+          )}
+          {mapStatus.error ? (
+            <span className={shell.pill}>map: error</span>
+          ) : (
+            <span className={shell.pill}>map: ok</span>
+          )}
         </div>
       </div>
 
@@ -855,7 +889,11 @@ export default function OpsMapPage(): React.JSX.Element {
             <div className={shell.hudGrid}>
               <span className={shell.pill}>vehicle.online: {onlineCount}</span>
               <span className={shell.pill}>vehicle.offline: {offlineCount}</span>
-              {lastError ? <span className={shell.pill}>error: {lastError}</span> : <span className={shell.pill}>error: —</span>}
+              {lastError ? (
+                <span className={shell.pill}>error: {lastError}</span>
+              ) : (
+                <span className={shell.pill}>error: —</span>
+              )}
             </div>
 
             <div className={shell.spacerSm} />
@@ -866,12 +904,16 @@ export default function OpsMapPage(): React.JSX.Element {
               <div className={shell.selectedCard}>
                 <div className={shell.selectedRow}>
                   <span className={shell.selectedLabel}>Indicativ</span>
-                  <span className={`${shell.selectedValue} ${shell.mono}`}>{selectedVehicle.vehicleId}</span>
+                  <span className={`${shell.selectedValue} ${shell.mono}`}>
+                    {selectedVehicle.vehicleId}
+                  </span>
                 </div>
 
                 <div className={shell.selectedRow}>
                   <span className={shell.selectedLabel}>Nr</span>
-                  <span className={`${shell.selectedValue} ${shell.mono}`}>{selectedVehicle.plateNumber}</span>
+                  <span className={`${shell.selectedValue} ${shell.mono}`}>
+                    {selectedVehicle.plateNumber}
+                  </span>
                 </div>
 
                 <div className={shell.selectedRow}>
@@ -881,7 +923,9 @@ export default function OpsMapPage(): React.JSX.Element {
 
                 <div className={shell.selectedRow}>
                   <span className={shell.selectedLabel}>Status șofer</span>
-                  <span className={`${shell.selectedValue} ${shell.mono}`}>{selectedDriverStatus}</span>
+                  <span className={`${shell.selectedValue} ${shell.mono}`}>
+                    {selectedDriverStatus}
+                  </span>
                 </div>
 
                 <div className={shell.selectedRow}>
@@ -890,7 +934,9 @@ export default function OpsMapPage(): React.JSX.Element {
                 </div>
               </div>
             ) : (
-              <p className={shell.selectedHint}>Click pe un marker pentru detalii (indicativ / nr / șofer / model).</p>
+              <p className={shell.selectedHint}>
+                Click pe un marker pentru detalii (indicativ / nr / șofer / model).
+              </p>
             )}
           </div>
         </aside>

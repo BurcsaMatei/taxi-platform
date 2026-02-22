@@ -3,9 +3,8 @@
 // ==============================
 // Imports
 // ==============================
-import { globalStyle } from "@vanilla-extract/css";
-
 import { themeClassDark, themeClassLight, vars } from "@taxi/tokens";
+import { globalStyle } from "@vanilla-extract/css";
 
 // ==============================
 // Global styles

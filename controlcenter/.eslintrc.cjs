@@ -14,28 +14,26 @@ module.exports = {
     "plugin:jsx-a11y/recommended",
     "prettier",
   ],
-  ignorePatterns: [
-    ".next/",
-    "node_modules/",
-    "lib/gallery.data.ts", // fișier GENERAT
-  ],
+  ignorePatterns: [".next/", "node_modules/", "lib/gallery.data.ts"],
   rules: {
-    // tip imports – se potrivește cu `verbatimModuleSyntax: true`
     "@typescript-eslint/consistent-type-imports": [
       "error",
       { prefer: "type-imports", fixStyle: "inline-type-imports" },
     ],
 
-    // unused
     "@typescript-eslint/no-unused-vars": "off",
     "unused-imports/no-unused-imports": "warn",
 
-    // sortare importuri
     "simple-import-sort/imports": "warn",
     "simple-import-sort/exports": "warn",
 
-    // a11y mici
     "jsx-a11y/anchor-is-valid": "off",
+
+    // ✅ prevent rule-load crash + consistent behavior
+    "@typescript-eslint/no-unused-expressions": [
+      "error",
+      { allowShortCircuit: true, allowTernary: true, allowTaggedTemplates: true },
+    ],
   },
   settings: {
     next: { rootDir: ["./"] },
