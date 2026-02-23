@@ -16,6 +16,15 @@ export const tableWrap = style({
   background: vars.color.surface,
 });
 
+// ✅ full-bleed wrapper for Orders (no container feel)
+export const tableWrapFullBleed = style({
+  overflow: "auto",
+  borderRadius: vars.radius.lg,
+  border: `1px solid ${vars.color.border}`,
+  background: vars.color.surface,
+  boxShadow: vars.shadow.md,
+});
+
 export const table = style({
   width: "100%",
   borderCollapse: "separate",
@@ -45,6 +54,7 @@ export const td = style({
   padding: vars.space.md,
   borderBottom: `1px solid ${vars.color.border}`,
   verticalAlign: "top",
+  fontWeight: 700,
 });
 
 // ✅ VE: nu putem face "&:hover td" în selectors; folosim globalStyle
@@ -55,8 +65,9 @@ globalStyle(`${trHover}:hover ${td}`, {
 });
 
 export const cellMono = style({
-  fontFamily: "monospace",
+  fontFamily: vars.typography.font.mono,
   fontSize: "12px",
+  fontWeight: 800,
 });
 
 export const badge = style({

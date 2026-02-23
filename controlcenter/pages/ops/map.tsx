@@ -7,12 +7,16 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 import type { OrderStatus, RealtimeEnvelope } from "@taxi/shared";
 import { isActiveOrderStatus, topics } from "@taxi/shared";
+import { themeClassDark, themeClassLight } from "@taxi/tokens";
 import type { Feature, FeatureCollection, Point } from "geojson";
 import type { GeoJSONSource, IControl, Map as MapboxMap } from "mapbox-gl";
 import * as React from "react";
 
+import ThemeSwitcher from "../../components/ThemeSwitcher";
 import { useControlcenterTopicEvents } from "../../lib/realtime/controlcenterWs";
-import * as shell from "../../styles/ops/opsShell.css";
+import * as corner from "../../styles/ops/opsCornerPanel.css";
+import * as hud from "../../styles/ops/opsHud.css";
+import * as s from "../../styles/ops/opsMap.css";
 
 // ==============================
 // Constante
@@ -36,6 +40,10 @@ const TAXI_ICON_ID = "taxi-icon";
 
 const SOURCE_ID = "vehicles-source";
 const LAYER_ID = "vehicles-layer";
+
+// Mapbox styles (theme-aware)
+const MAP_STYLE_LIGHT = "mapbox://styles/mapbox/streets-v12";
+const MAP_STYLE_DARK = "mapbox://styles/mapbox/dark-v11";
 
 // ==============================
 // Types
@@ -122,6 +130,14 @@ type MapboxModule = {
   };
 };
 
+type ThemeMode = "light" | "dark";
+
+type LayerClickEvent = {
+  features?: Array<{
+    properties?: unknown;
+  }>;
+};
+
 // ==============================
 // Utils
 // ==============================
@@ -147,9 +163,9 @@ function fmtAge(nowMs: number, iso: string): string {
   const ts = parseIsoMs(iso);
   const diff = Math.max(0, nowMs - ts);
 
-  const s = Math.floor(diff / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60);
+  const s2 = Math.floor(diff / 1000);
+  if (s2 < 60) return `${s2}s`;
+  const m = Math.floor(s2 / 60);
   if (m < 60) return `${m}m`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h`;
@@ -166,9 +182,9 @@ function toTelHref(raw: string): string {
 }
 
 function normalizeIndicativInput(raw: string): string {
-  const s = raw.trim();
-  if (!s) return "";
-  const digits = s.replace(/[^\d]/g, "");
+  const s2 = raw.trim();
+  if (!s2) return "";
+  const digits = s2.replace(/[^\d]/g, "");
   if (!digits) return "";
 
   // common: "5" -> "05"
@@ -285,6 +301,36 @@ async function fetchCity(cityId: string): Promise<CityPublic> {
   return d.city as CityPublic;
 }
 
+function readThemeMode(): ThemeMode {
+  const root = document.documentElement;
+  if (root.classList.contains(themeClassDark)) return "dark";
+  if (root.classList.contains(themeClassLight)) return "light";
+  // fallback safe
+  return "dark";
+}
+
+function useThemeMode(): ThemeMode {
+  const [mode, setMode] = React.useState<ThemeMode>(() => "dark");
+
+  React.useEffect(() => {
+    setMode(readThemeMode());
+
+    const root = document.documentElement;
+    const obs = new MutationObserver(() => {
+      setMode(readThemeMode());
+    });
+
+    obs.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+
+  return mode;
+}
+
+function styleForTheme(mode: ThemeMode): string {
+  return mode === "dark" ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
+}
+
 // ==============================
 // Mapbox (client-only)
 // ==============================
@@ -292,6 +338,7 @@ function useMapboxMap(
   containerRef: React.RefObject<HTMLDivElement>,
   vehiclesForRender: ReadonlyArray<VehiclePoint>,
   vehiclesForSearch: ReadonlyArray<VehiclePoint>,
+  themeMode: ThemeMode,
   onSelectVehicleId: (vehicleId: string) => void,
 ): {
   ok: boolean;
@@ -305,6 +352,10 @@ function useMapboxMap(
   });
 
   const mapRef = React.useRef<MapboxMap | null>(null);
+  const themeRef = React.useRef<ThemeMode>(themeMode);
+  themeRef.current = themeMode;
+
+  const lastStyleRef = React.useRef<string | null>(null);
 
   // ✅ SEARCH map: last known point (even if old)
   const vehiclesRef = React.useRef<Map<string, VehiclePoint>>(new Map<string, VehiclePoint>());
@@ -312,11 +363,80 @@ function useMapboxMap(
   const onSelectRef = React.useRef(onSelectVehicleId);
   onSelectRef.current = onSelectVehicleId;
 
+  const layerClickHandlerRef = React.useRef<((ev: LayerClickEvent) => void) | null>(null);
+
   React.useEffect(() => {
     const m = new Map<string, VehiclePoint>();
     for (const v of vehiclesForSearch) m.set(v.vehicleId, v);
     vehiclesRef.current = m;
   }, [vehiclesForSearch]);
+
+  const ensureLayerStack = React.useCallback(async (map: MapboxMap): Promise<void> => {
+    // icon
+    if (!map.hasImage(TAXI_ICON_ID)) {
+      const img = await loadMapImage(map, TAXI_ICON_SRC);
+      if (!map.hasImage(TAXI_ICON_ID)) {
+        map.addImage(TAXI_ICON_ID, img as never);
+      }
+    }
+
+    // source
+    if (!map.getSource(SOURCE_ID)) {
+      map.addSource(SOURCE_ID, {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+    }
+
+    // layer
+    if (!map.getLayer(LAYER_ID)) {
+      map.addLayer({
+        id: LAYER_ID,
+        type: "symbol",
+        source: SOURCE_ID,
+        layout: {
+          "icon-image": TAXI_ICON_ID,
+          "icon-size": 1,
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+
+          "text-field": ["get", "vehicleId"],
+          "text-size": 12,
+          "text-anchor": "top",
+          "text-offset": [0, -1.2],
+          "text-allow-overlap": true,
+          "text-ignore-placement": true,
+        },
+        paint: {
+          "text-halo-color": "rgba(255,255,255,0.95)",
+          "text-halo-width": 2,
+        },
+      });
+    }
+
+    // click handler — must re-bind after every setStyle (style.load)
+    if (!layerClickHandlerRef.current) {
+      layerClickHandlerRef.current = (ev: LayerClickEvent) => {
+        const f = ev.features && ev.features[0];
+        if (!f) return;
+
+        const props = f.properties as unknown;
+        if (!props || typeof props !== "object") return;
+
+        const v = props as { vehicleId?: unknown };
+        if (typeof v.vehicleId !== "string" || v.vehicleId.trim().length === 0) return;
+
+        onSelectRef.current(v.vehicleId);
+      };
+    }
+
+    try {
+      map.off("click", LAYER_ID, layerClickHandlerRef.current as never);
+    } catch {
+      // ignore
+    }
+    map.on("click", LAYER_ID, layerClickHandlerRef.current as never);
+  }, []);
 
   React.useEffect(() => {
     const el = containerRef.current;
@@ -341,9 +461,12 @@ function useMapboxMap(
 
         m.default.accessToken = token;
 
+        const initialStyle = styleForTheme(themeRef.current);
+        lastStyleRef.current = initialStyle;
+
         const map = new m.default.Map({
           container: el,
-          style: "mapbox://styles/mapbox/streets-v12",
+          style: initialStyle,
           center: DEFAULT_CENTER as unknown as [number, number],
           zoom: DEFAULT_ZOOM,
         });
@@ -353,68 +476,26 @@ function useMapboxMap(
         const nav = new m.default.NavigationControl({ visualizePitch: true });
         map.addControl(nav, "top-right");
 
-        map.on("load", async () => {
+        const onReady = async () => {
           if (disposed) return;
 
           try {
-            if (!map.hasImage(TAXI_ICON_ID)) {
-              const img = await loadMapImage(map, TAXI_ICON_SRC);
-              if (!disposed && !map.hasImage(TAXI_ICON_ID)) {
-                map.addImage(TAXI_ICON_ID, img as never);
-              }
-            }
-
-            if (!map.getSource(SOURCE_ID)) {
-              map.addSource(SOURCE_ID, {
-                type: "geojson",
-                data: { type: "FeatureCollection", features: [] },
-              });
-            }
-
-            if (!map.getLayer(LAYER_ID)) {
-              map.addLayer({
-                id: LAYER_ID,
-                type: "symbol",
-                source: SOURCE_ID,
-                layout: {
-                  "icon-image": TAXI_ICON_ID,
-                  "icon-size": 1,
-                  "icon-allow-overlap": true,
-                  "icon-ignore-placement": true,
-
-                  "text-field": ["get", "vehicleId"],
-                  "text-size": 12,
-                  "text-anchor": "top",
-                  "text-offset": [0, -1.2],
-                  "text-allow-overlap": true,
-                  "text-ignore-placement": true,
-                },
-                paint: {
-                  "text-halo-color": "rgba(255,255,255,0.95)",
-                  "text-halo-width": 2,
-                },
-              });
-            }
-
-            map.on("click", LAYER_ID, (ev) => {
-              const f = ev.features && ev.features[0];
-              if (!f) return;
-
-              const props = f.properties as unknown;
-              if (!props || typeof props !== "object") return;
-
-              const v = props as { vehicleId?: unknown };
-              if (typeof v.vehicleId !== "string" || v.vehicleId.trim().length === 0) return;
-
-              onSelectRef.current(v.vehicleId);
-            });
-
+            await ensureLayerStack(map);
             map.resize();
             setState({ ok: true, error: null });
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Mapbox layer init failed";
             setState({ ok: false, error: msg });
           }
+        };
+
+        map.on("load", () => {
+          void onReady();
+        });
+
+        // After setStyle, Mapbox re-emits this; we must re-ensure source/layer + click handler.
+        map.on("style.load", () => {
+          void onReady();
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Mapbox init failed";
@@ -434,7 +515,24 @@ function useMapboxMap(
         // ignore
       }
     };
-  }, [containerRef]);
+  }, [containerRef, ensureLayerStack]);
+
+  // Theme -> style switch (minimal, safe)
+  React.useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const nextStyle = styleForTheme(themeMode);
+    if (lastStyleRef.current === nextStyle) return;
+
+    lastStyleRef.current = nextStyle;
+
+    try {
+      map.setStyle(nextStyle);
+    } catch {
+      // ignore
+    }
+  }, [themeMode]);
 
   // ✅ render only ONLINE markers (as before)
   React.useEffect(() => {
@@ -500,6 +598,7 @@ export default function OpsMapPage(): React.JSX.Element {
   const { connected, ready, lastError, events } = useControlcenterTopicEvents(topic);
 
   const now = useNowTick(1000);
+  const themeMode = useThemeMode();
 
   const [fleet, setFleet] = React.useState<ReadonlyArray<FleetVehicle>>([]);
   const [fleetError, setFleetError] = React.useState<string | null>(null);
@@ -613,12 +712,12 @@ export default function OpsMapPage(): React.JSX.Element {
     const byOrder = new globalThis.Map<string, OrderStatusSnap>();
 
     for (const e of events) {
-      const s = getOrderStatusSnap(e);
-      if (!s) continue;
+      const snap = getOrderStatusSnap(e);
+      if (!snap) continue;
 
-      const prev = byOrder.get(s.orderId);
-      if (!prev || parseIsoMs(s.ts) >= parseIsoMs(prev.ts)) {
-        byOrder.set(s.orderId, s);
+      const prev = byOrder.get(snap.orderId);
+      if (!prev || parseIsoMs(snap.ts) >= parseIsoMs(prev.ts)) {
+        byOrder.set(snap.orderId, snap);
       }
     }
 
@@ -701,8 +800,9 @@ export default function OpsMapPage(): React.JSX.Element {
   const [searchHint, setSearchHint] = React.useState<string>("");
 
   const mapElRef = React.useRef<HTMLDivElement>(null);
-  const mapStatus = useMapboxMap(mapElRef, vehiclesOnline, vehiclesForSearch, (vehicleId) => {
-    setSelectedVehicleId(vehicleId);
+
+  const mapStatus = useMapboxMap(mapElRef, vehiclesOnline, vehiclesForSearch, themeMode, (id) => {
+    setSelectedVehicleId(id);
   });
 
   const computeOnlineStatusForVehicle = React.useCallback(
@@ -771,176 +871,240 @@ export default function OpsMapPage(): React.JSX.Element {
     setSearchHint("");
   }, [mapStatus]);
 
+  // ==============================
+  // HUD collapse + Corner collapse
+  // ==============================
+  const [hudCollapsed, setHudCollapsed] = React.useState<boolean>(false);
+  const [cornerCollapsed, setCornerCollapsed] = React.useState<boolean>(false);
+
+  const toggleHud = React.useCallback(() => {
+    setHudCollapsed((v) => !v);
+  }, []);
+
+  const toggleCorner = React.useCallback(() => {
+    setCornerCollapsed((v) => !v);
+  }, []);
+
   return (
-    <div className={shell.root}>
-      <div className={shell.topBar}>
-        <h1 className={shell.title}>OPS / Map</h1>
+    <main className={s.page} data-page="ops-map">
+      <div className={s.mapRoot} aria-label="Map canvas">
+        <div ref={mapElRef} className={s.mapFill} />
 
-        <div className={shell.mapControls}>
-          <form
-            className={shell.mapSearchForm}
-            onSubmit={onSubmitSearch}
-            role="search"
-            aria-label="Caută indicativ"
-          >
-            <input
-              className={`${shell.mapSearchInput} ${shell.mono}`}
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              inputMode="numeric"
-              placeholder="Caută indicativ (ex: 05)"
-              aria-label="Indicativ"
-            />
-            <button className={`${shell.mapBtn} ${shell.mapBtnPrimary}`} type="submit">
-              Caută
-            </button>
-          </form>
-
-          <button className={shell.mapBtn} type="button" onClick={onReset}>
+        <div className={s.mapTopRight} aria-label="Map controls">
+          <button className={s.mapBtn} type="button" onClick={onReset}>
             Reset map
           </button>
+        </div>
 
-          {searchHint ? (
-            <span className={shell.mapHint} role="status" aria-live="polite">
-              {searchHint}
+        {/* HUD (left) */}
+        <aside
+          className={`${s.hud} ${hudCollapsed ? s.hudCollapsed : ""}`}
+          aria-label="HUD"
+          data-collapsed={hudCollapsed ? "1" : "0"}
+        >
+          {/* Edge toggle button (right middle) */}
+          <button
+            className={hud.edgeToggle}
+            type="button"
+            onClick={toggleHud}
+            aria-pressed={hudCollapsed ? "true" : "false"}
+            aria-label={hudCollapsed ? "Extinde HUD" : "Restrânge HUD"}
+          >
+            <span className={hud.edgeChevron} aria-hidden="true">
+              {hudCollapsed ? "›" : "‹"}
             </span>
-          ) : null}
-        </div>
+          </button>
 
-        <div className={shell.meta}>
-          <span className={shell.pill}>
-            <span className={`${shell.dot} ${connected ? shell.dotOn : ""}`} aria-hidden="true" />
-            connected: {connected ? "true" : "false"}
-          </span>
+          <div className={s.hudInner}>
+            <header className={hud.header}>
+              <div className={hud.headerMain}>
+                <div className={hud.brandRow}>
+                  <div className={hud.brandTitle}>galant.taxi</div>
+                </div>
+                <div className={hud.pageTitle}>CONTROL CENTER / MAP</div>
+              </div>
+            </header>
 
-          <span className={shell.pill}>ready: {ready ? "true" : "false"}</span>
+            <div className={hud.body}>
+              <section className={hud.section} aria-label="Critical status">
+                <div className={hud.sectionTitle}>Status</div>
 
-          <span className={shell.pill}>
-            cityId: <span className={shell.mono}>{CITY_ID}</span>
-          </span>
+                {/* Theme button + Theme value + online/offline pills */}
+                <div className={hud.actionsRow} aria-label="Status actions">
+                  <div className={hud.themeInline}>
+                    <ThemeSwitcher />
+                    <span className={hud.themeValue}>{themeMode.toUpperCase()}</span>
+                  </div>
 
-          <span className={shell.pill}>fleet total: {FLEET_TOTAL}</span>
-          <span className={shell.pill}>online: {onlineCount}</span>
-          <span className={shell.pill}>offline: {offlineCount}</span>
+                  <div className={hud.actionsPills}>
+                    <span className={hud.actionPill}>online {onlineCount}</span>
+                    <span className={hud.actionPillMuted}>offline {offlineCount}</span>
+                  </div>
+                </div>
 
-          <span className={shell.pill}>
-            events: <span className={shell.mono}>{events.length}</span>
-          </span>
-          <span className={shell.pill}>
-            lastPoints: <span className={shell.mono}>{latestPointById.size}</span>
-          </span>
-          <span className={shell.pill}>
-            lastPresence: <span className={shell.mono}>{latestPresenceById.size}</span>
-          </span>
+                <div className={hud.kvGrid}>
+                  <div className={hud.kv}>
+                    <div className={hud.k}>WS</div>
+                    <div className={hud.v}>
+                      <span
+                        className={`${hud.dot} ${connected ? hud.dotOn : ""}`}
+                        aria-hidden="true"
+                      />
+                      {connected ? "CONNECTED" : "DISCONNECTED"}
+                    </div>
+                  </div>
 
-          {fleetError ? (
-            <span className={shell.pill}>fleet: error</span>
-          ) : (
-            <span className={shell.pill}>fleet: ok</span>
-          )}
-          {cityError ? (
-            <span className={shell.pill}>city: error</span>
-          ) : (
-            <span className={shell.pill}>city: ok</span>
-          )}
-          {tel ? (
-            <a className={`${shell.pill} ${shell.mono}`} href={tel}>
-              dispatch: {city?.dispatchPhone}
-            </a>
-          ) : null}
-          {lastError ? (
-            <span className={shell.pill}>error: {lastError}</span>
-          ) : (
-            <span className={shell.pill}>error: —</span>
-          )}
-          {mapStatus.error ? (
-            <span className={shell.pill}>map: error</span>
-          ) : (
-            <span className={shell.pill}>map: ok</span>
-          )}
-        </div>
-      </div>
+                  <div className={hud.kv}>
+                    <div className={hud.k}>City</div>
+                    <div className={hud.vMono}>{CITY_ID}</div>
+                  </div>
 
-      <div className={`${shell.content} ${shell.twoCols}`}>
-        <section className={shell.panel} aria-label="Map area">
-          <div className={shell.panelHeader}>
-            <h2 className={shell.panelTitle}>Mapbox</h2>
-            <span className={shell.pill}>cars online: {onlineCount}</span>
-          </div>
+                  {tel ? (
+                    <div className={hud.kv}>
+                      <div className={hud.k}>Dispatch</div>
+                      <a className={hud.vLinkMono} href={tel}>
+                        {city?.dispatchPhone}
+                      </a>
+                    </div>
+                  ) : null}
 
-          <div className={shell.panelBody}>
-            {mapStatus.error ? <p className={shell.mono}>map error: {mapStatus.error}</p> : null}
-            {fleetError ? <p className={shell.mono}>fleet error: {fleetError}</p> : null}
-            {cityError ? <p className={shell.mono}>city error: {cityError}</p> : null}
+                  {mapStatus.error ? (
+                    <div className={hud.kv}>
+                      <div className={hud.k}>Map</div>
+                      <div className={hud.vErr}>ERROR</div>
+                    </div>
+                  ) : (
+                    <div className={hud.kv}>
+                      <div className={hud.k}>Map</div>
+                      <div className={hud.vOk}>OK</div>
+                    </div>
+                  )}
+                </div>
 
-            <div className={shell.mapCanvas}>
-              <div ref={mapElRef} className={shell.mapFill} />
+                {lastError ? <div className={hud.alert}>WS error: {lastError}</div> : null}
+                {fleetError ? <div className={hud.alert}>Fleet error: {fleetError}</div> : null}
+                {cityError ? <div className={hud.alert}>City error: {cityError}</div> : null}
+              </section>
+
+              <section className={hud.sectionMuted} aria-label="Debug">
+                <div className={hud.sectionTitle}>Debug</div>
+
+                <div className={hud.kvGrid}>
+                  <div className={hud.kv}>
+                    <div className={hud.k}>ready</div>
+                    <div className={hud.vMono}>{ready ? "true" : "false"}</div>
+                  </div>
+
+                  <div className={hud.kv}>
+                    <div className={hud.k}>topic</div>
+                    <div className={hud.vMono}>{topic}</div>
+                  </div>
+
+                  <div className={hud.kv}>
+                    <div className={hud.k}>events</div>
+                    <div className={hud.vMono}>{events.length}</div>
+                  </div>
+
+                  <div className={hud.kv}>
+                    <div className={hud.k}>lastPoints</div>
+                    <div className={hud.vMono}>{latestPointById.size}</div>
+                  </div>
+
+                  <div className={hud.kv}>
+                    <div className={hud.k}>lastPresence</div>
+                    <div className={hud.vMono}>{latestPresenceById.size}</div>
+                  </div>
+
+                  <div className={hud.kv}>
+                    <div className={hud.k}>fleet</div>
+                    <div className={hud.vMono}>{fleet.length || 0}</div>
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
-        </section>
+        </aside>
 
-        <aside className={shell.panel} aria-label="HUD">
-          <div className={shell.panelHeader}>
-            <h2 className={shell.panelTitle}>HUD (realtime)</h2>
-            <span className={`${shell.pill} ${shell.mono}`}>{topic}</span>
-          </div>
+        {/* Collapsed HUD rail */}
+        {hudCollapsed ? <div className={s.hudRail} aria-label="Collapsed HUD rail" /> : null}
 
-          <div className={shell.panelBody}>
-            <div className={shell.hudGrid}>
-              <span className={shell.pill}>vehicle.online: {onlineCount}</span>
-              <span className={shell.pill}>vehicle.offline: {offlineCount}</span>
-              {lastError ? (
-                <span className={shell.pill}>error: {lastError}</span>
-              ) : (
-                <span className={shell.pill}>error: —</span>
-              )}
-            </div>
+        {/* Corner panel (bottom-right) */}
+        <aside
+          className={`${corner.root} ${cornerCollapsed ? corner.isCollapsed : ""}`}
+          aria-label="Vehicle search and selection"
+          data-collapsed={cornerCollapsed ? "1" : "0"}
+        >
+          <button
+            className={corner.collapseBtn}
+            type="button"
+            onClick={toggleCorner}
+            aria-pressed={cornerCollapsed ? "true" : "false"}
+            aria-label={cornerCollapsed ? "Extinde panoul" : "Restrânge panoul"}
+          >
+            <span className={corner.chevron} aria-hidden="true">
+              {cornerCollapsed ? "▲" : "▼"}
+            </span>
+          </button>
 
-            <div className={shell.spacerSm} />
+          <div className={corner.inner}>
+            <form
+              className={corner.searchForm}
+              onSubmit={onSubmitSearch}
+              role="search"
+              aria-label="Caută indicativ"
+            >
+              <input
+                className={corner.searchInput}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                inputMode="numeric"
+                placeholder="Caută indicativ (ex: 05)"
+                aria-label="Indicativ"
+              />
+              <button className={corner.searchBtn} type="submit">
+                Caută
+              </button>
+            </form>
 
-            <h3 className={shell.hudSubTitle}>Selected vehicle</h3>
+            {searchHint ? (
+              <div className={corner.hint} role="status" aria-live="polite">
+                {searchHint}
+              </div>
+            ) : null}
 
             {selectedVehicle ? (
-              <div className={shell.selectedCard}>
-                <div className={shell.selectedRow}>
-                  <span className={shell.selectedLabel}>Indicativ</span>
-                  <span className={`${shell.selectedValue} ${shell.mono}`}>
-                    {selectedVehicle.vehicleId}
-                  </span>
+              <div className={corner.card}>
+                <div className={corner.cardTitle}>Vehicul selectat</div>
+
+                <div className={corner.cardRow}>
+                  <span className={corner.cardLabel}>Indicativ</span>
+                  <span className={corner.cardValueMono}>{selectedVehicle.vehicleId}</span>
                 </div>
 
-                <div className={shell.selectedRow}>
-                  <span className={shell.selectedLabel}>Nr</span>
-                  <span className={`${shell.selectedValue} ${shell.mono}`}>
-                    {selectedVehicle.plateNumber}
-                  </span>
+                <div className={corner.cardRow}>
+                  <span className={corner.cardLabel}>Nr</span>
+                  <span className={corner.cardValueMono}>{selectedVehicle.plateNumber}</span>
                 </div>
 
-                <div className={shell.selectedRow}>
-                  <span className={shell.selectedLabel}>Șofer</span>
-                  <span className={shell.selectedValue}>{selectedVehicle.driverName}</span>
+                <div className={corner.cardRow}>
+                  <span className={corner.cardLabel}>Șofer</span>
+                  <span className={corner.cardValue}>{selectedVehicle.driverName}</span>
                 </div>
 
-                <div className={shell.selectedRow}>
-                  <span className={shell.selectedLabel}>Status șofer</span>
-                  <span className={`${shell.selectedValue} ${shell.mono}`}>
-                    {selectedDriverStatus}
-                  </span>
+                <div className={corner.cardRow}>
+                  <span className={corner.cardLabel}>Status</span>
+                  <span className={corner.cardValueMono}>{selectedDriverStatus}</span>
                 </div>
 
-                <div className={shell.selectedRow}>
-                  <span className={shell.selectedLabel}>Mașină</span>
-                  <span className={shell.selectedValue}>{selectedVehicle.carModel}</span>
+                <div className={corner.cardRow}>
+                  <span className={corner.cardLabel}>Mașină</span>
+                  <span className={corner.cardValue}>{selectedVehicle.carModel}</span>
                 </div>
               </div>
-            ) : (
-              <p className={shell.selectedHint}>
-                Click pe un marker pentru detalii (indicativ / nr / șofer / model).
-              </p>
-            )}
+            ) : null}
           </div>
         </aside>
       </div>
-    </div>
+    </main>
   );
 }

@@ -7,9 +7,10 @@ import type { GeoPoint, OrderStatus, RealtimeEnvelope } from "@taxi/shared";
 import { isActiveOrderStatus, topics } from "@taxi/shared";
 import * as React from "react";
 
+import ThemeSwitcher from "../../components/ThemeSwitcher";
 import { useControlcenterTopicEvents } from "../../lib/realtime/controlcenterWs";
+import * as hud from "../../styles/ops/opsHudTop.css";
 import * as t from "../../styles/ops/opsOrders.css";
-import * as shell from "../../styles/ops/opsShell.css";
 
 // ==============================
 // Constante
@@ -518,168 +519,171 @@ export default function OpsOrdersPage(): React.JSX.Element {
   );
 
   return (
-    <div className={shell.root}>
-      <div className={shell.topBar}>
-        <h1 className={shell.title}>OPS / Orders</h1>
-
-        <div className={shell.meta}>
-          <span className={shell.pill}>
-            <span className={`${shell.dot} ${connected ? shell.dotOn : ""}`} aria-hidden="true" />
-            connected: {connected ? "true" : "false"}
-          </span>
-
-          <span className={shell.pill}>ready: {ready ? "true" : "false"}</span>
-
-          <span className={shell.pill}>
-            cityId: <span className={shell.mono}>{CITY_ID}</span>
-          </span>
-
-          <span className={shell.pill}>
-            topic: <span className={shell.mono}>{topic}</span>
-          </span>
-
-          <span className={`${shell.pill} ${t.badgeMuted}`}>error: {lastError ?? "—"}</span>
+    <main className={hud.page}>
+      <header className={hud.topHud} aria-label="Orders HUD">
+        <div className={hud.brand}>
+          <div className={hud.brandTitle}>galant.taxi</div>
+          <div className={hud.pageTitle}>CONTROL CENTER / ORDERS</div>
         </div>
-      </div>
 
-      <div className={shell.content}>
-        <section aria-label="Realtime orders table">
-          <div className={t.tableWrap}>
-            {rows.length === 0 ? (
-              <div className={t.empty}>No events yet. Trimite POST /orders pe API.</div>
-            ) : (
-              <table className={t.table}>
-                <thead className={t.thead}>
-                  <tr>
-                    <th className={t.th}>Date</th>
-                    <th className={t.th}>Time</th>
-                    <th className={t.th}>User</th>
-                    <th className={t.th}>Pickup</th>
-                    <th className={t.th}>Dropoff</th>
-                    <th className={t.th}>Notes</th>
-                    <th className={t.th}>Indicativ</th>
-                    <th className={t.th}>Vehicle</th>
-                    <th className={t.th}>Dispatch</th>
-                    <th className={t.th}>Call</th>
-                    <th className={t.th}>Order</th>
-                    <th className={t.th}>Status</th>
-                    <th className={t.th}>Updated</th>
-                  </tr>
-                </thead>
+        <div className={hud.right}>
+          <div className={hud.pills}>
+            <span className={hud.pill}>
+              <span className={`${hud.dot} ${connected ? hud.dotOn : ""}`} aria-hidden="true" />
+              {connected ? "CONNECTED" : "DISCONNECTED"}
+            </span>
 
-                <tbody>
-                  {rows.map((r) => {
-                    const created = toDateTimeParts(r.createdAtIso);
-                    const updated = toDateTimeParts(r.updatedAtIso);
-                    const vStatus = getVehicleStatusForRow(r);
+            <span className={hud.pillMuted}>ready {ready ? "true" : "false"}</span>
+            <span className={hud.pillMuted}>
+              city <span className={hud.mono}>{CITY_ID}</span>
+            </span>
+            <span className={hud.pillMuted}>
+              topic <span className={hud.mono}>{topic}</span>
+            </span>
 
-                    const called = r.calledAtIso ? toDateTimeParts(r.calledAtIso) : null;
-
-                    return (
-                      <tr key={r.orderId} className={t.trHover}>
-                        <td className={`${t.td} ${t.cellMono}`}>{created.date}</td>
-                        <td className={`${t.td} ${t.cellMono}`}>{created.time}</td>
-
-                        <td className={t.td}>
-                          <div className={t.rowSplit}>
-                            <span className={t.cellMono}>{r.userId ?? "—"}</span>
-                            <span className={t.small}>future: userId</span>
-                          </div>
-                        </td>
-
-                        <td className={t.td}>
-                          <div className={t.rowSplit}>
-                            <span className={t.cellMono}>{fmtPoint(r.pickup)}</span>
-                            <span className={t.small}>pickup</span>
-                          </div>
-                        </td>
-
-                        <td className={t.td}>
-                          <div className={t.rowSplit}>
-                            <span className={t.cellMono}>{fmtPoint(r.dropoff)}</span>
-                            <span className={t.small}>dropoff</span>
-                          </div>
-                        </td>
-
-                        <td className={t.td}>
-                          <div className={t.rowSplit}>
-                            <span className={t.cellMono}>{r.notes ?? "—"}</span>
-                            <span className={t.small}>future: notes</span>
-                          </div>
-                        </td>
-
-                        <td className={t.td}>
-                          <div className={t.rowSplit}>
-                            <span className={t.cellMono}>{r.indicativ ?? "—"}</span>
-                            <span className={t.small}>realtime: order.assigned</span>
-                          </div>
-                        </td>
-
-                        <td className={t.td}>
-                          {vStatus === "—" ? (
-                            <span className={t.cellMono}>—</span>
-                          ) : (
-                            <span className={t.badge}>
-                              <span className={t.cellMono}>{vStatus}</span>
-                            </span>
-                          )}
-                        </td>
-
-                        <td className={t.td}>
-                          {r.dispatch === "—" ? (
-                            <span className={t.cellMono}>—</span>
-                          ) : r.dispatch === "OK" ? (
-                            <span className={t.badge}>
-                              <span className={t.cellMono}>OK</span>
-                            </span>
-                          ) : (
-                            <div className={t.rowSplit}>
-                              <span className={t.badge}>
-                                <span className={t.cellMono}>FAILED</span>
-                              </span>
-                              <span className={t.small}>
-                                {r.dispatchReason ?? "NO_AVAILABLE_VEHICLE"}
-                              </span>
-                            </div>
-                          )}
-                        </td>
-
-                        <td className={t.td}>
-                          {!called ? (
-                            <span className={t.cellMono}>—</span>
-                          ) : (
-                            <div className={t.rowSplit}>
-                              <span className={t.badge}>
-                                <span className={t.cellMono}>CALLED</span>
-                              </span>
-                              <span className={t.small}>
-                                {called.date} {called.time} · {r.calledPhone ?? "—"} ·{" "}
-                                {r.calledSource ?? "USER_APP"}
-                              </span>
-                            </div>
-                          )}
-                        </td>
-
-                        <td className={`${t.td} ${t.cellMono}`}>{r.orderId}</td>
-
-                        <td className={t.td}>
-                          <span className={t.badge}>
-                            <span className={t.cellMono}>{r.status}</span>
-                          </span>
-                        </td>
-
-                        <td className={`${t.td} ${t.cellMono}`}>
-                          {updated.date} {updated.time}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
+            <span className={hud.pillMuted}>error {lastError ?? "—"}</span>
           </div>
-        </section>
-      </div>
-    </div>
+
+          <ThemeSwitcher />
+        </div>
+      </header>
+
+      <section className={hud.tableArea} aria-label="Realtime orders table" data-full-bleed="true">
+        <div className={t.tableWrapFullBleed}>
+          {rows.length === 0 ? (
+            <div className={t.empty}>No events yet. Trimite POST /orders pe API.</div>
+          ) : (
+            <table className={t.table}>
+              <thead className={t.thead}>
+                <tr>
+                  <th className={t.th}>Date</th>
+                  <th className={t.th}>Time</th>
+                  <th className={t.th}>User</th>
+                  <th className={t.th}>Pickup</th>
+                  <th className={t.th}>Dropoff</th>
+                  <th className={t.th}>Notes</th>
+                  <th className={t.th}>Indicativ</th>
+                  <th className={t.th}>Vehicle</th>
+                  <th className={t.th}>Dispatch</th>
+                  <th className={t.th}>Call</th>
+                  <th className={t.th}>Order</th>
+                  <th className={t.th}>Status</th>
+                  <th className={t.th}>Updated</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {rows.map((r) => {
+                  const created = toDateTimeParts(r.createdAtIso);
+                  const updated = toDateTimeParts(r.updatedAtIso);
+                  const vStatus = getVehicleStatusForRow(r);
+
+                  const called = r.calledAtIso ? toDateTimeParts(r.calledAtIso) : null;
+
+                  return (
+                    <tr key={r.orderId} className={t.trHover}>
+                      <td className={`${t.td} ${t.cellMono}`}>{created.date}</td>
+                      <td className={`${t.td} ${t.cellMono}`}>{created.time}</td>
+
+                      <td className={t.td}>
+                        <div className={t.rowSplit}>
+                          <span className={t.cellMono}>{r.userId ?? "—"}</span>
+                          <span className={t.small}>future: userId</span>
+                        </div>
+                      </td>
+
+                      <td className={t.td}>
+                        <div className={t.rowSplit}>
+                          <span className={t.cellMono}>{fmtPoint(r.pickup)}</span>
+                          <span className={t.small}>pickup</span>
+                        </div>
+                      </td>
+
+                      <td className={t.td}>
+                        <div className={t.rowSplit}>
+                          <span className={t.cellMono}>{fmtPoint(r.dropoff)}</span>
+                          <span className={t.small}>dropoff</span>
+                        </div>
+                      </td>
+
+                      <td className={t.td}>
+                        <div className={t.rowSplit}>
+                          <span className={t.cellMono}>{r.notes ?? "—"}</span>
+                          <span className={t.small}>future: notes</span>
+                        </div>
+                      </td>
+
+                      <td className={t.td}>
+                        <div className={t.rowSplit}>
+                          <span className={t.cellMono}>{r.indicativ ?? "—"}</span>
+                          <span className={t.small}>realtime: order.assigned</span>
+                        </div>
+                      </td>
+
+                      <td className={t.td}>
+                        {vStatus === "—" ? (
+                          <span className={t.cellMono}>—</span>
+                        ) : (
+                          <span className={t.badge}>
+                            <span className={t.cellMono}>{vStatus}</span>
+                          </span>
+                        )}
+                      </td>
+
+                      <td className={t.td}>
+                        {r.dispatch === "—" ? (
+                          <span className={t.cellMono}>—</span>
+                        ) : r.dispatch === "OK" ? (
+                          <span className={t.badge}>
+                            <span className={t.cellMono}>OK</span>
+                          </span>
+                        ) : (
+                          <div className={t.rowSplit}>
+                            <span className={t.badge}>
+                              <span className={t.cellMono}>FAILED</span>
+                            </span>
+                            <span className={t.small}>
+                              {r.dispatchReason ?? "NO_AVAILABLE_VEHICLE"}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className={t.td}>
+                        {!called ? (
+                          <span className={t.cellMono}>—</span>
+                        ) : (
+                          <div className={t.rowSplit}>
+                            <span className={t.badge}>
+                              <span className={t.cellMono}>CALLED</span>
+                            </span>
+                            <span className={t.small}>
+                              {called.date} {called.time} · {r.calledPhone ?? "—"} ·{" "}
+                              {r.calledSource ?? "USER_APP"}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className={`${t.td} ${t.cellMono}`}>{r.orderId}</td>
+
+                      <td className={t.td}>
+                        <span className={t.badge}>
+                          <span className={t.cellMono}>{r.status}</span>
+                        </span>
+                      </td>
+
+                      <td className={`${t.td} ${t.cellMono}`}>
+                        {updated.date} {updated.time}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+    </main>
   );
 }
