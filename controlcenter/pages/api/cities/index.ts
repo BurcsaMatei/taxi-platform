@@ -1,4 +1,4 @@
-// controlcenter/pages/api/cities/[cityId].ts
+// controlcenter/pages/api/cities/index.ts
 
 // ==============================
 // Imports
@@ -8,8 +8,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 // ==============================
 // Types
 // ==============================
-type CityOk = { ok: true; city: unknown };
-type CityErr = { ok: false; error: string };
+type CitiesOk = { ok: true; cities: ReadonlyArray<unknown> };
+type CitiesErr = { ok: false; error: string };
 
 // ==============================
 // Utils
@@ -28,20 +28,17 @@ function apiBaseUrl(): string {
 // ==============================
 // Handler
 // ==============================
-export default async function handler(req: NextApiRequest, res: NextApiResponse<CityOk | CityErr>) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<CitiesOk | CitiesErr>,
+) {
   if (req.method !== "GET") {
     res.status(405).json({ ok: false, error: "Method not allowed" });
     return;
   }
 
-  const cityId = typeof req.query.cityId === "string" ? req.query.cityId.trim() : "";
-  if (!cityId) {
-    res.status(400).json({ ok: false, error: "cityId required" });
-    return;
-  }
-
   try {
-    const upstream = `${apiBaseUrl()}/cities/${encodeURIComponent(cityId)}`;
+    const upstream = `${apiBaseUrl()}/cities`;
     const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
 
     const r = await fetch(upstream, {
@@ -49,9 +46,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       headers: auth ? { authorization: auth } : {},
     });
 
-    const data = await r.json();
+    const text = await r.text();
+    const data = JSON.parse(text);
     res.status(r.status).json(data);
   } catch {
-    res.status(502).json({ ok: false, error: "City proxy error" });
+    res.status(502).json({ ok: false, error: "Cities proxy error" });
   }
 }

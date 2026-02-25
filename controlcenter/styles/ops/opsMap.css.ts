@@ -55,6 +55,41 @@ export const mapBtn = style({
   },
 });
 
+// ✅ HQ city selector “near HUD edge”
+export const mapTopHud = style({
+  position: "absolute",
+  zIndex: vars.z.overlay,
+  display: "grid",
+  gap: vars.space.sm,
+
+  // mobile default: under top-right controls
+  top: `calc(${vars.space.lg} + 52px)`,
+  right: vars.space.lg,
+  left: vars.space.lg,
+
+  padding: vars.space.md,
+  borderRadius: vars.radius.lg,
+  border: `1px solid ${vars.color.border}`,
+  background: `color-mix(in srgb, ${vars.color.surface} 92%, transparent)`,
+  backdropFilter: "blur(10px)",
+  boxShadow: vars.shadow.md,
+
+  "@media": {
+    // desktop: attach next to HUD width
+    [mq.md]: {
+      top: vars.space.lg,
+      right: "auto",
+      left: `calc(min(420px, 92vw) + ${vars.space.lg})`,
+      width: "min(360px, calc(100vw - 420px - 3 * 16px))",
+    },
+  },
+});
+
+globalStyle(`${mapRoot}[data-hud-collapsed="1"] ${mapTopHud}`, {
+  left: `calc(64px + ${vars.space.lg})`,
+});
+
+// HUD
 export const hud = style({
   position: "absolute",
   top: 0,
@@ -66,8 +101,6 @@ export const hud = style({
   borderRight: `1px solid ${vars.color.border}`,
   background: `color-mix(in srgb, ${vars.color.primary} 18%, transparent)`,
   backdropFilter: "blur(10px)",
-
-  // ✅ IMPORTANT: allow the attached semicircle handle to render outside
   overflow: "visible",
 });
 
@@ -76,8 +109,6 @@ export const hudInner = style({
   display: "grid",
   gridTemplateRows: "auto 1fr",
   minHeight: 0,
-
-  // ✅ clip HUD content (cards) while keeping outer handle visible
   overflow: "hidden",
 });
 
@@ -85,7 +116,6 @@ export const hudCollapsed = style({
   width: 64,
 });
 
-// ✅ când e retractat, ascundem complet conținutul HUD-ului (dar NU handle-ul; e în TSX în afara hudInner)
 globalStyle(`${hudCollapsed} ${hudInner}`, {
   display: "none",
 });
@@ -103,7 +133,7 @@ export const hudRail = style({
   overflow: "hidden",
 });
 
-// ✅ rail-ul nu mai afișează text deloc (strip gol)
+// rail placeholders
 export const hudRailTop = style({});
 export const hudRailBrand = style({});
 export const hudRailSub = style({});

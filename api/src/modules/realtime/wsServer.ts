@@ -10,6 +10,9 @@ import { WebSocket, WebSocketServer } from "ws";
 import type { RealtimeEnvelope, RealtimeTopic } from "@taxi/shared";
 import { isRealtimeTopic } from "@taxi/shared";
 
+import type { ControlcenterTokenPayload } from "../auth/controlcenterToken.js";
+import { verifyControlcenterToken } from "../auth/controlcenterToken.js";
+
 // ==============================
 // Types
 // ==============================
@@ -60,6 +63,27 @@ function parseClientMsg(raw: unknown): ClientMsg | null {
   return null;
 }
 
+function readEnv(name: string): string | null {
+  const v = process.env[name];
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t.length > 0 ? t : null;
+}
+
+function topicCityId(topic: RealtimeTopic): string | null {
+  if (!topic.startsWith("controlcenter:")) return null;
+  const city = topic.slice("controlcenter:".length).trim().toLowerCase();
+  return city.length > 0 ? city : null;
+}
+
+function canSubscribe(payload: ControlcenterTokenPayload, topic: RealtimeTopic): boolean {
+  const city = topicCityId(topic);
+  if (!city) return false;
+
+  if (payload.scope === "hq") return true;
+  return payload.cityId === city;
+}
+
 // ==============================
 // Hub
 // ==============================
@@ -71,7 +95,21 @@ export function createRealtimeHub(): RealtimeHub {
   // socket -> topics
   const socketSubs = new WeakMap<WebSocket, Set<RealtimeTopic>>();
 
+  // socket -> auth
+  const socketAuth = new WeakMap<WebSocket, ControlcenterTokenPayload>();
+
   function subscribe(ws: WebSocket, topic: RealtimeTopic): void {
+    const auth = socketAuth.get(ws);
+    if (!auth) {
+      safeSend(ws, { type: "error", error: "unauthorized" });
+      return;
+    }
+
+    if (!canSubscribe(auth, topic)) {
+      safeSend(ws, { type: "error", error: "forbidden topic" });
+      return;
+    }
+
     let set = topicSubs.get(topic);
     if (!set) {
       set = new Set<WebSocket>();
@@ -104,13 +142,13 @@ export function createRealtimeHub(): RealtimeHub {
 
   function cleanup(ws: WebSocket): void {
     const mine = socketSubs.get(ws);
-    if (!mine) return;
-
-    for (const t of mine) {
-      const set = topicSubs.get(t);
-      if (set) {
-        set.delete(ws);
-        if (set.size === 0) topicSubs.delete(t);
+    if (mine) {
+      for (const t of mine) {
+        const set = topicSubs.get(t);
+        if (set) {
+          set.delete(ws);
+          if (set.size === 0) topicSubs.delete(t);
+        }
       }
     }
   }
@@ -168,8 +206,29 @@ export function createRealtimeHub(): RealtimeHub {
   }
 
   function handleUpgrade(req: IncomingMessage, socket: Duplex, head: Buffer): void {
-    const url = req.url || "";
-    if (!url.startsWith("/ws")) {
+    const urlRaw = req.url || "";
+    if (!urlRaw.startsWith("/ws")) {
+      socket.destroy();
+      return;
+    }
+
+    const secret = readEnv("TAXI_AUTH_TOKEN_SECRET");
+    if (!secret) {
+      socket.destroy();
+      return;
+    }
+
+    let token = "";
+    try {
+      const u = new URL(urlRaw, "http://local");
+      token = u.searchParams.get("token") ?? "";
+    } catch {
+      socket.destroy();
+      return;
+    }
+
+    const v = verifyControlcenterToken(secret, token);
+    if (!v.ok) {
       socket.destroy();
       return;
     }
@@ -178,6 +237,7 @@ export function createRealtimeHub(): RealtimeHub {
     const netSocket = socket as unknown as Socket;
 
     wss.handleUpgrade(req, netSocket, head, (ws) => {
+      socketAuth.set(ws, v.payload);
       wss.emit("connection", ws, req);
     });
   }
