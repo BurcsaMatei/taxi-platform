@@ -1,4 +1,4 @@
-// controlcenter/pages/api/cities/[cityId].ts
+// controlcenter/pages/api/auth/controlcenter/login.ts
 
 // ==============================
 // Imports
@@ -8,8 +8,18 @@ import type { NextApiRequest, NextApiResponse } from "next";
 // ==============================
 // Types
 // ==============================
-type CityOk = { ok: true; city: unknown };
-type CityErr = { ok: false; error: string };
+type LoginOk = {
+  ok: true;
+  token: string;
+  scope: "hq" | "city";
+  cityId: string;
+  exp: number;
+};
+
+type LoginErr = {
+  ok: false;
+  error: string;
+};
 
 // ==============================
 // Utils
@@ -28,30 +38,27 @@ function apiBaseUrl(): string {
 // ==============================
 // Handler
 // ==============================
-export default async function handler(req: NextApiRequest, res: NextApiResponse<CityOk | CityErr>) {
-  if (req.method !== "GET") {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<LoginOk | LoginErr>,
+) {
+  if (req.method !== "POST") {
     res.status(405).json({ ok: false, error: "Method not allowed" });
     return;
   }
 
-  const cityId = typeof req.query.cityId === "string" ? req.query.cityId.trim() : "";
-  if (!cityId) {
-    res.status(400).json({ ok: false, error: "cityId required" });
-    return;
-  }
-
   try {
-    const upstream = `${apiBaseUrl()}/cities/${encodeURIComponent(cityId)}`;
-    const auth = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
+    const upstream = `${apiBaseUrl()}/auth/controlcenter/login`;
 
     const r = await fetch(upstream, {
-      method: "GET",
-      headers: auth ? { authorization: auth } : {},
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(req.body ?? {}),
     });
 
-    const data = await r.json();
+    const data = (await r.json()) as LoginOk | LoginErr;
     res.status(r.status).json(data);
   } catch {
-    res.status(502).json({ ok: false, error: "City proxy error" });
+    res.status(502).json({ ok: false, error: "Auth proxy error" });
   }
 }

@@ -68,7 +68,6 @@ function isWsIncoming(v: unknown): v is WsIncoming {
   }
 
   if (t === "event") {
-    // event shape validate minimally (we trust server for full strictness)
     if (typeof v.topic !== "string") return false;
     const ev = (v as { event?: unknown }).event;
     return isObject(ev) && typeof ev.name === "string" && typeof ev.ts === "string";
@@ -79,7 +78,24 @@ function isWsIncoming(v: unknown): v is WsIncoming {
 
 function toWsUrl(url?: string): string {
   if (typeof url === "string" && url.trim().length > 0) return url.trim();
+  const env = process.env.NEXT_PUBLIC_TAXI_WS_URL;
+  if (typeof env === "string" && env.trim().length > 0) return env.trim();
   return DEFAULT_WS_URL;
+}
+
+function withToken(wsUrl: string, token?: string): string {
+  const t = typeof token === "string" ? token.trim() : "";
+  if (!t) return wsUrl;
+
+  try {
+    const u = new URL(wsUrl);
+    u.searchParams.set("token", t);
+    return u.toString();
+  } catch {
+    // fallback best-effort (assume no query)
+    const sep = wsUrl.includes("?") ? "&" : "?";
+    return `${wsUrl}${sep}token=${encodeURIComponent(t)}`;
+  }
 }
 
 function send(ws: WebSocket, msg: WsOutgoing): void {
@@ -91,9 +107,13 @@ function send(ws: WebSocket, msg: WsOutgoing): void {
 // ==============================
 export function useControlcenterTopicEvents(
   topic: string,
-  opts?: { wsUrl?: string; maxEvents?: number },
+  opts?: { wsUrl?: string; maxEvents?: number; authToken?: string; enabled?: boolean },
 ): ControlcenterWsState {
-  const wsUrl = toWsUrl(opts?.wsUrl);
+  const enabled = opts?.enabled ?? true;
+
+  const baseWsUrl = toWsUrl(opts?.wsUrl);
+  const wsUrl = withToken(baseWsUrl, opts?.authToken);
+
   const maxEvents =
     typeof opts?.maxEvents === "number" && opts.maxEvents > 10 ? opts.maxEvents : MAX_EVENTS;
 
@@ -120,6 +140,27 @@ export function useControlcenterTopicEvents(
   }, []);
 
   React.useEffect(() => {
+    if (!enabled) {
+      const ws = wsRef.current;
+      wsRef.current = null;
+
+      try {
+        ws?.close();
+      } catch {
+        // ignore
+      }
+
+      setState((prev) => ({
+        ...prev,
+        connected: false,
+        ready: false,
+        topic: null,
+        lastError: null,
+      }));
+
+      return;
+    }
+
     const isBrowser = typeof window !== "undefined";
     if (!isBrowser) return;
 
@@ -156,10 +197,8 @@ export function useControlcenterTopicEvents(
           lastError: null,
         }));
 
-        // subscribe immediately
         send(ws, { type: "subscribe", topic: topicRef.current });
 
-        // keep-alive ping (best-effort)
         clearPing();
         pingTimer = window.setInterval(() => {
           try {
@@ -198,7 +237,6 @@ export function useControlcenterTopicEvents(
             const cut = next.length > maxEvents ? next.slice(next.length - maxEvents) : next;
             return { ...prev, events: cut };
           });
-          return;
         }
       });
 
@@ -216,10 +254,9 @@ export function useControlcenterTopicEvents(
 
         if (closeRequested) return;
 
-        // reconnect with backoff
         retryRef.current += 1;
         const step = Math.min(10, retryRef.current);
-        const delay = 250 * step * step; // 250ms, 1s, 2.25s... up to ~25s
+        const delay = 250 * step * step;
         window.setTimeout(() => {
           if (!aliveRef.current) return;
           connect();
@@ -256,10 +293,11 @@ export function useControlcenterTopicEvents(
         // ignore
       }
     };
-  }, [maxEvents, topic, wsUrl]);
+  }, [enabled, maxEvents, topic, wsUrl]);
 
-  // re-subscribe on topic change (same socket)
   React.useEffect(() => {
+    if (!enabled) return;
+
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
@@ -268,7 +306,7 @@ export function useControlcenterTopicEvents(
     } catch {
       // ignore
     }
-  }, [topic]);
+  }, [enabled, topic]);
 
   return state;
 }
