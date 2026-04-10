@@ -10,3 +10,5 @@ controlcenter/public/rss.xml
 controlcenter/public/feed.xml
 controlcenter/public/**/rss.xml
 controlcenter/public/**/feed.xml
+BRIEFING.md
+briefing.sh
