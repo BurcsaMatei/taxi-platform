@@ -33,17 +33,17 @@ type FleetResponseErr = {
 type FleetResponse = FleetResponseOk | FleetResponseErr;
 
 // ==============================
-// Constante
-// ==============================
-const DEFAULT_API_BASE_URL = "http://localhost:3001";
-
-// ==============================
 // Utils
 // ==============================
+function readEnv(name: string): string | null {
+  const v = process.env[name];
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t.length > 0 ? t : null;
+}
+
 function apiBaseUrl(): string {
-  const v = process.env.API_BASE_URL;
-  if (typeof v === "string" && v.trim().length > 0) return v.trim();
-  return DEFAULT_API_BASE_URL;
+  return readEnv("TAXI_API_BASE_URL") ?? "http://localhost:3001";
 }
 
 function getCityId(req: NextApiRequest): string | null {
