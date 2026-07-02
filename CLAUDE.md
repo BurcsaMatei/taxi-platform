@@ -60,7 +60,7 @@ npm -w controlcenter run check:all              # format:check + typecheck + lin
 npm -w packages/shared run build                # required before api build (dist consumed)
 ```
 
-- Node 20.x (`controlcenter/.nvmrc`), npm workspaces (no pnpm/turbo).
+- Node 22.x (`controlcenter/.nvmrc`, `engines` în controlcenter — aliniat cu Vercel), npm workspaces (no pnpm/turbo).
 - `scripts/*.ps1` (tree, fleet simulators) are **PowerShell-only** — they do not run on WSL without `pwsh`.
 - Env: vezi `api/.env.example` și `controlcenter/.env.example` — reale, fiecare cheie documentată e citită efectiv de cod (taxi-003). API-ul nu încarcă singur `.env.local` — pornește-l cu `node --env-file=api/.env.local api/dist/index.js`.
 
