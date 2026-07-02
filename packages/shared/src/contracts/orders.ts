@@ -1,47 +1,57 @@
-﻿import type { GeoPlace } from "../domain/geo";
-import type { OrderStatus } from "../domain/status";
-import type { ServiceTypeCode } from "../domain/service";
+// packages/shared/src/contracts/orders.ts
 
-export interface QuoteRequest {
-  cityId: string;
-  serviceType: ServiceTypeCode;
-  pickup: GeoPlace;
-  dropoff?: GeoPlace;
-}
+// ==============================
+// Imports
+// ==============================
+import type { GeoPoint } from "../domain/geo.js";
+import type { OrderStatus } from "../domain/status.js";
+import type { ServiceTypeCode } from "../domain/service.js";
+import type { OrderCallSource, OrderCallTarget } from "../events/realtime.js";
 
-export interface QuoteResponse {
-  currency: "RON";
-  quotedPrice: number;
-  // opțional: distance/eta dacă vrem să le expunem încă din MVP
-  distanceMeters?: number;
-  durationSeconds?: number;
-}
-
+// ==============================
+// POST /orders
+// ==============================
 export interface CreateOrderRequest {
   cityId: string;
-  serviceType: ServiceTypeCode;
-
-  pickup: GeoPlace;
-  dropoff?: GeoPlace;
-
-  notes?: string;
-  promoCode?: string;
-
-  // pentru MVP: trimitem quote-ul calculat server-side, nu din client
+  service: ServiceTypeCode;
+  pickup: GeoPoint;
+  dropoff: GeoPoint;
 }
 
-export interface CreateOrderResponse {
-  orderId: string;
-  status: OrderStatus; // de obicei PAYMENT_PENDING sau DISPATCHING, depinde de model
+export type CreateOrderResponse =
+  | {
+      ok: true;
+      orderId: string;
+      status: OrderStatus;
+      assignedVehicleId: string | null;
+      dispatch: "OK" | "FAILED";
+      reason?: string;
+    }
+  | { ok: false; error: string };
+
+// ==============================
+// PATCH /orders/:id/status (orderId în URL)
+// ==============================
+export interface PatchOrderStatusRequest {
+  cityId: string;
+  from: OrderStatus;
+  to: OrderStatus;
+  service?: ServiceTypeCode;
 }
 
-export interface UpdateOrderStatusRequest {
-  orderId: string;
-  nextStatus: OrderStatus;
+export type PatchOrderStatusResponse =
+  | { ok: true; orderId: string; from: OrderStatus; to: OrderStatus }
+  | { ok: false; error: string };
+
+// ==============================
+// POST /orders/:id/call (orderId în URL)
+// ==============================
+export interface CallOrderRequest {
+  cityId: string;
+  service: ServiceTypeCode;
+  target: OrderCallTarget;
+  phoneNumber: string;
+  source?: OrderCallSource;
 }
 
-export interface UpdateOrderStatusResponse {
-  orderId: string;
-  status: OrderStatus;
-  updatedAt: string; // ISO
-}
+export type CallOrderResponse = { ok: true } | { ok: false; error: string };
