@@ -100,11 +100,11 @@ npm -w packages/shared run build                # required before api build (dis
 
 Ordinea de dezvoltare (decisă, fixă): **controlcenter → landing → user → driver → payments**.
 
-Planul complet trăiește în **`ROADMAP.md`** (root): 7 faze + post-MVP, drum critic, matrice de dependențe, milestone-uri M1–M4. Backlog-ul integral: **43 issues GitHub deschise (#15–#57)**, mapare `#nr = taxi-XXX + 14`, documentată în ROADMAP.md. Workflow-ul de execuție per issue (Prompt 1 analiză → aprobare → Prompt 2 execuție → PR → merge → update CLAUDE.md + ROADMAP.md): `docs/konceptid-taxi.md`.
+Planul complet trăiește în **`ROADMAP.md`** (root): 7 faze + post-MVP, drum critic, matrice de dependențe, milestone-uri M1–M4. Backlog-ul integral: **45 issues GitHub deschise (#15–#59)**, mapare `#nr = taxi-XXX + 14` (taxi-044 = #58 Vercel/domeniu, taxi-045 = #59 admin panel), documentată în ROADMAP.md. Workflow-ul de execuție per issue (Prompt 1 analiză → aprobare → Prompt 2 execuție → PR → merge → update CLAUDE.md + ROADMAP.md): `docs/konceptid-taxi.md`.
 
 **Milestone curent: M1 — Repo sigur + CI verde.** Puncte de intrare: taxi-001 (#15, rotire secrete) și taxi-002 (#16, CI la root).
 
-În sesiunea de setup (2026-07-02) nu s-a modificat niciun cod — doar documentație (CLAUDE.md, docs/konceptid-taxi.md, ROADMAP.md) și deschiderea celor 43 de issues.
+În sesiunea de setup (2026-07-02) nu s-a modificat niciun cod — doar documentație (CLAUDE.md, docs/konceptid-taxi.md, ROADMAP.md) și deschiderea celor 45 de issues.
 
 ## Referințe
 
