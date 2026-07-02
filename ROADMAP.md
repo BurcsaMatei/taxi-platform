@@ -5,9 +5,9 @@
 Planul complet de execuție de la starea actuală (controlcenter matur vizual, api demo fără persistență, user/driver inexistente) până la produsul testabil end-to-end: user comandă → driver acceptă și execută → controlcenter vede totul live.
 
 Cum se folosește:
-- Fiecare item = un issue GitHub deschis (#15–#57), executat prin workflow-ul din `docs/konceptid-taxi.md`: Prompt 1 (analiză) → aprobare → Prompt 2 (execuție) → PR → merge → update CLAUDE.md + ROADMAP.md.
+- Fiecare item = un issue GitHub deschis (#15–#59), executat prin workflow-ul din `docs/konceptid-taxi.md`: Prompt 1 (analiză) → aprobare → Prompt 2 (execuție) → PR → merge → update CLAUDE.md + ROADMAP.md.
 - **Ordinea e dictată exclusiv de dependențe, nu de preferințe.** Un issue nu se începe dacă are dependențe nemergeuite. Dacă două issues nu se blochează reciproc, pot rula în paralel.
-- Convenție numerotare: `#nr GitHub = taxi-XXX + 14` (taxi-001 = #15 … taxi-043 = #57).
+- Convenție numerotare: `#nr GitHub = taxi-XXX + 14` (taxi-001 = #15 … taxi-045 = #59).
 
 ## 2. Drumul critic (P1)
 
@@ -27,6 +27,7 @@ taxi-002 ──→ taxi-029 (#43) scaffold driver ──→ taxi-030 (#44) loca�
 taxi-010 (#24) evenimente driver + taxi-012 + taxi-027 ──→ taxi-028 (#42) dispatch confirmare
 taxi-028 + taxi-030 ──→ taxi-031 (#45) accept ofertă ──→ taxi-032 (#46) execuție cursă
 taxi-018 + taxi-024 + taxi-032 ──→ taxi-034 (#48) E2E
+taxi-001 + taxi-002 + taxi-003 ──→ taxi-044 (#58) Vercel + domeniu (ramură paralelă — nu blochează MVP-ul testabil local)
 ```
 
 \* taxi-003 e P2, dar stă pe drumul critic: taxi-011 depinde de el.
@@ -45,11 +46,13 @@ Scop: repo sigur, CI real, tooling care rulează pe WSL.
 | 2 | taxi-003 .env.example reale | #17 | P2 | infra | taxi-001 |
 | 2 | taxi-004 Simulatoare flotă bash/node | #18 | P2 | infra | — |
 | 2 | taxi-005 Fix proxy fleet env var | #19 | P2 | controlcenter | — |
+| 3 | taxi-044 Setup Vercel + domeniu + subdomenii | #58 | P1 | infra | taxi-001, taxi-002, taxi-003 |
 | 3 | taxi-006 README root | #20 | P3 | infra | — |
 | 3 | taxi-007 Eliminare next-pwa@0.0.1 | #21 | P3 | controlcenter | — |
 
-Paralel: 001 ∥ 002 ∥ 004 ∥ 005 (fără dependențe între ele); 006/007 oricând.
-Deblochează: Faza 2 (Supabase are nevoie de 001+003), scaffold-urile user/driver/landing (au nevoie de 002).
+Paralel: 001 ∥ 002 ∥ 004 ∥ 005 (fără dependențe între ele); 006/007 oricând; 044 după 001+002+003.
+Deblochează: Faza 2 (Supabase are nevoie de 001+003), scaffold-urile user/driver/landing (au nevoie de 002), deployment-ul suprafețelor web (044).
+Notă 044: API-ul (Express + WS) NU merge pe Vercel — VPS Hetzner, api.domeniu.ro; Vercel doar pentru controlcenter/user/driver/admin.
 
 ### Faza 1 — Shared ca sursă de adevăr
 Scop: contractele din `@taxi/shared` devin reale și complete înainte de a construi pe ele.
@@ -118,10 +121,12 @@ Scop: șoferul există — primește oferte, acceptă și conduce cursa prin toa
 | 2 | taxi-030 Online/offline + locație reală | #44 | P1 | driver/api | taxi-021, taxi-027, taxi-029 |
 | 3 | taxi-031 Primire ofertă + accept/refuz | #45 | P1 | driver | taxi-028, taxi-030 |
 | 4 | taxi-032 Execuție cursă (arrived → in_progress → completed) | #46 | P1 | driver/api | taxi-031 |
+| 2 | taxi-045 Scaffold admin panel + auth admin + CRUD indicative | #59 | P2 | admin/api/shared | taxi-011, taxi-027 |
 | 5 | taxi-033 Retragere endpoints /dev/vehicles/* | #47 | P2 | api/infra | taxi-004, taxi-030 |
 
-Paralel: 027 ∥ 029; după 027 → 028 ∥ 030 ∥ 043.
-Notă: taxi-043 a fost deschis ultimul, dar aparține logic acestei faze — cardul cursei din taxi-024 îl consumă; ideal se închide înainte de sau împreună cu 031.
+Paralel: 027 ∥ 029; după 027 → 028 ∥ 030 ∥ 043 ∥ 045.
+Notă: taxi-043 a fost deschis ulterior, dar aparține logic acestei faze — cardul cursei din taxi-024 îl consumă; ideal se închide înainte de sau împreună cu 031.
+Notă 045: introduce suprafața nouă `admin/` (a cincea suprafață web, admin.domeniu.ro) — interfața prin care flota (indicative `{CITY_CODE}{NR}`, poze, asocieri șofer–vehicul) se administrează fără acces direct la DB; pregătește auth-ul driver pe telefon (027) și cardul cursei (024/043).
 Deblochează: taxi-034 (E2E complet), taxi-036 (seed cu driveri).
 
 ### Faza 6 — E2E & QA
@@ -154,9 +159,9 @@ Ordinea internă e liberă, cu excepția 038 → 039. Conform ordinii de produs,
 
 | Issue | # | E blocat de | Blochează |
 |---|---|---|---|
-| taxi-001 | #15 | — | 003, 011 |
-| taxi-002 | #16 | — | 022, 029, 037 |
-| taxi-003 | #17 | 001 | 011 |
+| taxi-001 | #15 | — | 003, 011, 044 |
+| taxi-002 | #16 | — | 022, 029, 037, 044 |
+| taxi-003 | #17 | 001 | 011, 044 |
 | taxi-004 | #18 | — | 033 |
 | taxi-005 | #19 | — | — |
 | taxi-006 | #20 | — | — |
@@ -164,7 +169,7 @@ Ordinea internă e liberă, cu excepția 038 → 039. Conform ordinii de produs,
 | taxi-008 | #22 | — | 010, 012, 035 |
 | taxi-009 | #23 | — | 014 |
 | taxi-010 | #24 | 008 | 028 |
-| taxi-011 | #25 | 001, 003 | 012, 015, 016, 020, 027, 043 |
+| taxi-011 | #25 | 001, 003 | 012, 015, 016, 020, 027, 043, 045 |
 | taxi-012 | #26 | 008, 011 | 013, 014, 023, 028, 038 |
 | taxi-013 | #27 | 012 | 018, 019, 025 |
 | taxi-014 | #28 | 009, 012 | 023, 042 |
@@ -180,7 +185,7 @@ Ordinea internă e liberă, cu excepția 038 → 039. Conform ordinii de produs,
 | taxi-024 | #38 | 021, 023 | 034 |
 | taxi-025 | #39 | 013, 023 | — |
 | taxi-026 | #40 | 023 | — |
-| taxi-027 | #41 | 011, 020 | 028, 030, 036, 043 |
+| taxi-027 | #41 | 011, 020 | 028, 030, 036, 043, 045 |
 | taxi-028 | #42 | 010, 012, 027 | 031 |
 | taxi-029 | #43 | 002 | 030 |
 | taxi-030 | #44 | 021, 027, 029 | 031, 033 |
@@ -197,6 +202,8 @@ Ordinea internă e liberă, cu excepția 038 → 039. Conform ordinii de produs,
 | taxi-041 | #55 | — | — |
 | taxi-042 | #56 | 014 | — |
 | taxi-043 | #57 | 011, 027 | — |
+| taxi-044 | #58 | 001, 002, 003 | — |
+| taxi-045 | #59 | 011, 027 | — |
 
 ## 5. Milestone-uri
 
