@@ -7,7 +7,7 @@ Monorepo npm cu suprafețele:
 
 - `api/` — backend central (Express 5 + WebSocket, port 3001)
 - `controlcenter/` — dispecerat (Next.js 15 Pages Router, port 3000)
-- `user/`, `driver/` — **inexistente încă**; numele din `workspaces` sunt rezervate intenționat, NU le șterge
+- `user/`, `driver/` — **inexistente încă**; numele din `workspaces` sunt rezervate intenționat, NU le șterge. **`user/` va fi app nativ React Native (iOS + Android) — nu PWA, nu web**; se distribuie prin App Store + Google Play
 - `packages/shared/` — `@taxi/shared` — **single source of truth** pentru domain types, contracts, statuses, realtime events, topics
 - `packages/tokens/` — `@taxi/tokens` — design tokens (Vanilla Extract, light/dark)
 
@@ -92,7 +92,7 @@ npm -w packages/shared run build                # required before api build (dis
 - Env pe Vercel (dashboard, nu hardcodat): `NEXT_PUBLIC_MAPBOX_TOKEN`, `TAXI_API_BASE_URL=https://api.taxibaiamare.com`, `NEXT_PUBLIC_TAXI_WS_URL=wss://api.taxibaiamare.com/ws`. **`NEXT_PUBLIC_ENABLE_PWA` NU se setează** (ține `next-pwa` dezactivat — vezi taxi-007).
 - **API-ul (Express + WS) NU merge pe Vercel** — VPS Hetzner, `api.taxibaiamare.com` (deployment separat, în afara taxi-044). Până la VPS, login-ul pe producție eșuează controlat — e așteptat.
 - DNS (Hostico): CNAME `ops` → `cname.vercel-dns.com.`
-- Proiectele Vercel pentru user/driver/admin se creează când suprafețele vor exista (extindere din varianta A la modelul complet din #58).
+- Proiectele Vercel pentru driver/admin se creează când suprafețele vor exista (extindere din varianta A la modelul complet din #58). **App-ul user NU are subdomeniu web** — e nativ (React Native), distribuit prin store-uri; nu există `app.taxibaiamare.com` în plan.
 
 ## Interzis / Permis
 

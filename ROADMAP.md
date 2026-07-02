@@ -52,7 +52,7 @@ Scop: repo sigur, CI real, tooling care rulează pe WSL.
 
 Paralel: 001 ∥ 002 ∥ 004 ∥ 005 (fără dependențe între ele); 006/007 oricând; 044 după 001+002+003.
 Deblochează: Faza 2 (Supabase are nevoie de 001+003), scaffold-urile user/driver/landing (au nevoie de 002), deployment-ul suprafețelor web (044).
-Notă 044: API-ul (Express + WS) NU merge pe Vercel — VPS Hetzner, api.domeniu.ro; Vercel doar pentru controlcenter/user/driver/admin.
+Notă 044: API-ul (Express + WS) NU merge pe Vercel — VPS Hetzner, api.domeniu.ro; Vercel doar pentru controlcenter/driver/admin (user e app nativ React Native, distribuit prin App Store + Google Play — fără subdomeniu web).
 
 ### Faza 1 — Shared ca sursă de adevăr
 Scop: contractele din `@taxi/shared` devin reale și complete înainte de a construi pe ele.
@@ -100,7 +100,7 @@ Scop: clientul există — se autentifică, comandă și își urmărește cursa
 |---|---|---|---|---|---|
 | 1 | taxi-020 User auth (Supabase phone OTP) | #34 | P1 | api/shared | taxi-011 |
 | 2 | taxi-021 WS multi-subiect (user/driver) | #35 | P1 | api | taxi-020 |
-| 1 | taxi-022 Scaffold workspace user/ | #36 | P1 | user | taxi-002 |
+| 1 | taxi-022 Scaffold workspace user/ — **React Native (iOS + Android), nu Next.js** | #36 | P1 | user | taxi-002 |
 | 3 | taxi-023 Flux creare comandă | #37 | P1 | user | taxi-012, taxi-014, taxi-020, taxi-022 |
 | 4 | taxi-024 Tracking live comandă | #38 | P1 | user | taxi-021, taxi-023 |
 | 5 | taxi-025 Istoric comenzi user | #39 | P2 | user/api | taxi-013, taxi-023 |
