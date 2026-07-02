@@ -46,7 +46,7 @@ Scop: repo sigur, CI real, tooling care rulează pe WSL.
 | 2 | ✅ 2026-07-02 — taxi-003 .env.example reale | #17 | P2 | infra | taxi-001 |
 | 2 | taxi-004 Simulatoare flotă bash/node | #18 | P2 | infra | — |
 | 2 | taxi-005 Fix proxy fleet env var | #19 | P2 | controlcenter | — |
-| 3 | taxi-044 Setup Vercel + domeniu + subdomenii | #58 | P1 | infra | taxi-001, taxi-002, taxi-003 |
+| 3 | ✅ 2026-07-02 — taxi-044 Setup Vercel + domeniu (varianta A: doar controlcenter → `ops.taxibaiamare.com`; proiectele user/driver/admin la scaffold-ul lor) | #58 | P1 | infra | taxi-001, taxi-002, taxi-003 |
 | 3 | taxi-006 README root | #20 | P3 | infra | — |
 | 3 | taxi-007 Eliminare next-pwa@0.0.1 | #21 | P3 | controlcenter | — |
 
