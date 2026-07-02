@@ -5,7 +5,7 @@
 Planul complet de execuție de la starea actuală (controlcenter matur vizual, api demo fără persistență, user/driver inexistente) până la produsul testabil end-to-end: user comandă → driver acceptă și execută → controlcenter vede totul live.
 
 Cum se folosește:
-- Fiecare item = un issue GitHub deschis (#15–#59), executat prin workflow-ul din `docs/konceptid-taxi.md`: Prompt 1 (analiză) → aprobare → Prompt 2 (execuție) → PR → merge → update CLAUDE.md + ROADMAP.md.
+- Fiecare item = un issue GitHub (#15–#59 backlog-ul inițial; maparea `#nr = taxi-XXX + 14` e valabilă DOAR pentru acest interval — issue-urile noi de după, ex. taxi-046 = #76, taxi-047 = #77, primesc numărul curent GitHub), executat prin workflow-ul din `docs/konceptid-taxi.md`: Prompt 1 (analiză) → aprobare → Prompt 2 (execuție) → PR → merge → update CLAUDE.md + ROADMAP.md. Hot-fix-urile mici (P2/P3, fără risc arhitectural) pot sări peste Prompt 1, cu issue dedicat obligatoriu.
 - **Ordinea e dictată exclusiv de dependențe, nu de preferințe.** Un issue nu se începe dacă are dependențe nemergeuite. Dacă două issues nu se blochează reciproc, pot rula în paralel.
 - Convenție numerotare: `#nr GitHub = taxi-XXX + 14` (taxi-001 = #15 … taxi-045 = #59).
 
@@ -62,6 +62,8 @@ Scop: contractele din `@taxi/shared` devin reale și complete înainte de a cons
 | 1 | ✅ 2026-07-03 — taxi-008 Aliniere contracts/orders.ts cu API-ul real | #22 | P1 | shared/api | — |
 | 1 | ✅ 2026-07-03 — taxi-009 Mutare TokenPayload + CityPublic în shared | #23 | P1 | shared/api/controlcenter | — |
 | 2 | ✅ 2026-07-03 — taxi-010 Evenimente lifecycle driver + registry | #24 | P1 | shared/api | taxi-008 |
+| — | ✅ 2026-07-03 — taxi-046 Fix `Order.serviceType` → `service` (hot-fix post-audit) | #76 | P1 | shared | taxi-008 |
+| — | ✅ 2026-07-03 — taxi-047 Fix CI Node 20 → 22 (hot-fix post-audit) | #77 | P2 | infra | — |
 
 Paralel: 008 ∥ 009; faza întreagă poate rula în paralel cu Faza 0.
 Deblochează: taxi-012 (persistare pe contracte corecte), taxi-014, taxi-028, taxi-035.
@@ -204,12 +206,14 @@ Ordinea internă e liberă, cu excepția 038 → 039. Conform ordinii de produs,
 | taxi-043 | #57 | 011, 027 | — |
 | taxi-044 | #58 | 001, 002, 003 | — |
 | taxi-045 | #59 | 011, 027 | — |
+| taxi-046 | #76 | 008 | — |
+| taxi-047 | #77 | — | — |
 
 ## 5. Milestone-uri
 
-**M1 — Repo sigur + CI verde**
-Închise: taxi-001 (#15), taxi-002 (#16). Recomandat inclus: 003, 004, 005.
-Validare: secretele rotite și netracked, CI rulează pe PR și e verde, simulatorul de flotă merge pe WSL.
+**M1 — Repo sigur + CI verde — ✅ ATINS 2026-07-03**
+Închise: toată Faza 0 (taxi-001…007, taxi-044) + taxi-047 (CI pe Node 22).
+Validare: secretele rotite și netracked, CI rulează pe PR și e verde (Node 22, aliniat cu producția), simulatorul de flotă merge pe WSL, controlcenter LIVE pe ops.taxibaiamare.com.
 
 **M2 — API persistent + controlcenter funcțional complet**
 Închise: taxi-008…taxi-019 (#22–#33).
