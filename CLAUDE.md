@@ -54,6 +54,7 @@ browser → Next API proxies (controlcenter/pages/api/*) → Express :3001
 npm -w api run build && npm run dev:api        # node api/dist/index.js on :3001
 npm run dev:controlcenter                       # next dev on :3000
 
+npm run sim:fleet -- --city baia-mare --count 20  # fleet simulator (tsx, WSL-friendly); Ctrl+C = offline
 npm run typecheck                               # all workspaces (tsc --noEmit)
 npm -w controlcenter run lint                   # ESLint
 npm -w controlcenter run check:all              # format:check + typecheck + lint
@@ -61,7 +62,7 @@ npm -w packages/shared run build                # required before api build (dis
 ```
 
 - Node 22.x (`controlcenter/.nvmrc`, `engines` în controlcenter — aliniat cu Vercel), npm workspaces (no pnpm/turbo).
-- `scripts/*.ps1` (tree, fleet simulators) are **PowerShell-only** — they do not run on WSL without `pwsh`.
+- `scripts/project-tree.ps1` (singurul `.ps1` rămas) e **PowerShell-only** — nu rulează pe WSL fără `pwsh`. Simulatoarele de flotă sunt acum Node/tsx (`npm run sim:fleet`, taxi-004).
 - Env: vezi `api/.env.example` și `controlcenter/.env.example` — reale, fiecare cheie documentată e citită efectiv de cod (taxi-003). API-ul nu încarcă singur `.env.local` — pornește-l cu `node --env-file=api/.env.local api/dist/index.js`.
 
 ## Code conventions (KonceptID)
