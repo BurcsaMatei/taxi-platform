@@ -84,6 +84,14 @@ npm -w packages/shared run build                # required before api build (dis
 - Branch per issue, **squash & merge** into `main`. No direct commits to `main` for feature work.
 - Commit format: `type(scope): description` — e.g. `feat(controlcenter): ...`, `chore(api): ...`.
 
+## Deployment
+
+- **Controlcenter → Vercel**, proiect unic `taxi-controlcenter` pe **`ops.taxibaiamare.com`** (varianta A confirmată 2026-07-02: un proiect, două pagini interne `/ops/[cityId]/{map,orders}`). Root Directory: `controlcenter` (setare de dashboard); `controlcenter/vercel.json` definește install/build (shared se construiește înaintea controlcenter). Production doar din `main`, preview pe orice branch/PR.
+- Env pe Vercel (dashboard, nu hardcodat): `NEXT_PUBLIC_MAPBOX_TOKEN`, `TAXI_API_BASE_URL=https://api.taxibaiamare.com`, `NEXT_PUBLIC_TAXI_WS_URL=wss://api.taxibaiamare.com/ws`. **`NEXT_PUBLIC_ENABLE_PWA` NU se setează** (ține `next-pwa` dezactivat — vezi taxi-007).
+- **API-ul (Express + WS) NU merge pe Vercel** — VPS Hetzner, `api.taxibaiamare.com` (deployment separat, în afara taxi-044). Până la VPS, login-ul pe producție eșuează controlat — e așteptat.
+- DNS (Hostico): CNAME `ops` → `cname.vercel-dns.com.`
+- Proiectele Vercel pentru user/driver/admin se creează când suprafețele vor exista (extindere din varianta A la modelul complet din #58).
+
 ## Interzis / Permis
 
 **Interzis:**
