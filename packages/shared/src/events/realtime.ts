@@ -13,6 +13,11 @@ export type RealtimeEventName =
   | "order.assigned"
   | "order.dispatchFailed"
   | "order.userCalledDispatch"
+  | "order.offered"
+  | "order.accepted"
+  | "order.rejected"
+  | "order.driverArrived"
+  | "order.tripStarted"
   | "vehicle.locationUpdated"
   | "vehicle.presenceChanged";
 
@@ -62,6 +67,54 @@ export type OrderUserCalledDispatchPayload = {
   source: OrderCallSource; // ex: "USER_APP"
 };
 
+// Driver lifecycle (ofertă → accept/refuz → sosire → start cursă) — emitere: taxi-028
+export type OrderOfferedPayload = {
+  orderId: string;
+  cityId: string;
+  service: ServiceTypeCode;
+  driverId: string;
+  vehicleId: string; // indicativ (ex: "01")
+  pickup: GeoPoint;
+  dropoff: GeoPoint;
+  distanceMeters?: number;
+  expiresAt: string; // ISO — fereastra de accept
+};
+
+export type OrderAcceptedPayload = {
+  orderId: string;
+  cityId: string;
+  service: ServiceTypeCode;
+  driverId: string;
+  vehicleId: string; // indicativ (ex: "01")
+};
+
+export type OfferRejectReason = "DECLINED" | "TIMEOUT";
+
+export type OrderRejectedPayload = {
+  orderId: string;
+  cityId: string;
+  service: ServiceTypeCode;
+  driverId: string;
+  vehicleId: string; // indicativ (ex: "01")
+  reason: OfferRejectReason;
+};
+
+export type OrderDriverArrivedPayload = {
+  orderId: string;
+  cityId: string;
+  service: ServiceTypeCode;
+  driverId: string;
+  vehicleId: string; // indicativ (ex: "01")
+};
+
+export type OrderTripStartedPayload = {
+  orderId: string;
+  cityId: string;
+  service: ServiceTypeCode;
+  driverId: string;
+  vehicleId: string; // indicativ (ex: "01")
+};
+
 export type VehicleLocationUpdatedPayload = {
   vehicleId: string; // indicativ (ex: "01")
   cityId: string;
@@ -103,6 +156,31 @@ export type RealtimeEnvelope =
       payload: OrderUserCalledDispatchPayload;
     }
   | {
+      name: "order.offered";
+      ts: string; // ISO
+      payload: OrderOfferedPayload;
+    }
+  | {
+      name: "order.accepted";
+      ts: string; // ISO
+      payload: OrderAcceptedPayload;
+    }
+  | {
+      name: "order.rejected";
+      ts: string; // ISO
+      payload: OrderRejectedPayload;
+    }
+  | {
+      name: "order.driverArrived";
+      ts: string; // ISO
+      payload: OrderDriverArrivedPayload;
+    }
+  | {
+      name: "order.tripStarted";
+      ts: string; // ISO
+      payload: OrderTripStartedPayload;
+    }
+  | {
       name: "vehicle.locationUpdated";
       ts: string; // ISO
       payload: VehicleLocationUpdatedPayload;
@@ -140,6 +218,26 @@ export function makeOrderUserCalledDispatchEnvelope(
   payload: OrderUserCalledDispatchPayload,
 ): RealtimeEnvelope {
   return { name: "order.userCalledDispatch", ts: nowIso(), payload };
+}
+
+export function makeOrderOfferedEnvelope(payload: OrderOfferedPayload): RealtimeEnvelope {
+  return { name: "order.offered", ts: nowIso(), payload };
+}
+
+export function makeOrderAcceptedEnvelope(payload: OrderAcceptedPayload): RealtimeEnvelope {
+  return { name: "order.accepted", ts: nowIso(), payload };
+}
+
+export function makeOrderRejectedEnvelope(payload: OrderRejectedPayload): RealtimeEnvelope {
+  return { name: "order.rejected", ts: nowIso(), payload };
+}
+
+export function makeOrderDriverArrivedEnvelope(payload: OrderDriverArrivedPayload): RealtimeEnvelope {
+  return { name: "order.driverArrived", ts: nowIso(), payload };
+}
+
+export function makeOrderTripStartedEnvelope(payload: OrderTripStartedPayload): RealtimeEnvelope {
+  return { name: "order.tripStarted", ts: nowIso(), payload };
 }
 
 export function makeVehicleLocationUpdatedEnvelope(payload: VehicleLocationUpdatedPayload): RealtimeEnvelope {
