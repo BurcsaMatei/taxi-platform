@@ -1,17 +1,13 @@
 // controlcenter/lib/cities/citiesClient.ts
 
 // ==============================
+// Imports
+// ==============================
+import type { CityPublic } from "@taxi/shared";
+
+// ==============================
 // Types
 // ==============================
-export type CityPublic = {
-  id: string;
-  name: string;
-  slug: string;
-  timezone: string;
-  isActive: boolean;
-  dispatchPhone?: string;
-};
-
 export type CitiesResponseOk = {
   ok: true;
   cities: ReadonlyArray<CityPublic>;

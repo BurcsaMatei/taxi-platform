@@ -3,6 +3,7 @@
 // ==============================
 // Imports
 // ==============================
+import type { CityPublic } from "@taxi/shared";
 import type { NextPage } from "next";
 import * as React from "react";
 
@@ -14,7 +15,6 @@ import {
   loginControlcenter,
   setStoredControlcenterToken,
 } from "../lib/auth/controlcenterAuth";
-import type { CityPublic } from "../lib/cities/citiesClient";
 import { fetchCities } from "../lib/cities/citiesClient";
 import { withBase } from "../lib/config";
 import * as s from "../styles/ops/opsIndex.css";

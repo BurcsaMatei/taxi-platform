@@ -4,8 +4,8 @@
 // Imports
 // ==============================
 import type { Express, Request, Response } from "express";
+import type { ControlcenterScope, ControlcenterTokenPayload } from "@taxi/shared";
 
-import type { ControlcenterScope, ControlcenterTokenPayload } from "./controlcenterToken.js";
 import { signControlcenterToken } from "./controlcenterToken.js";
 
 // ==============================

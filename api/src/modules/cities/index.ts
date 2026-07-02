@@ -4,26 +4,13 @@
 // Imports
 // ==============================
 import type { Express } from "express";
+import type { CityPublic, ControlcenterTokenPayload } from "@taxi/shared";
 
-import type { ControlcenterTokenPayload } from "../auth/controlcenterToken.js";
 import { verifyControlcenterToken } from "../auth/controlcenterToken.js";
 
 // ==============================
 // Types
 // ==============================
-export type CityPublic = {
-  id: string;
-  name: string;
-  slug: string;
-  timezone: string;
-  isActive: boolean;
-  dispatchPhone?: string;
-
-  // ✅ Map initial view (single source of truth per city)
-  mapCenter: { lng: number; lat: number };
-  mapZoom: number;
-};
-
 type CityResponseOk = {
   ok: true;
   city: CityPublic;

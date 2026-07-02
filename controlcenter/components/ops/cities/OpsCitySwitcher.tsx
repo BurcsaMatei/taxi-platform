@@ -3,10 +3,10 @@
 // ==============================
 // Imports
 // ==============================
+import type { CityPublic } from "@taxi/shared";
 import { useRouter } from "next/router";
 import * as React from "react";
 
-import type { CityPublic } from "../../../lib/cities/citiesClient";
 import { fetchCities } from "../../../lib/cities/citiesClient";
 import * as s from "../../../styles/ops/opsCitySwitcher.css";
 
