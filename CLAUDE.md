@@ -42,7 +42,7 @@ browser → Next API proxies (controlcenter/pages/api/*) → Express :3001
 ```
 
 - Auth: PIN (per oraș sau HQ) → `POST /auth/controlcenter/login` → token HMAC custom (nu JWT) cu scope `hq` | `city` → autorizare pe subscribe la topicuri WS.
-- Topicuri: `city:` `order:` `driver:` `vehicle:` `controlcenter:` — registry-ul de evenimente permise per topic e în `api/src/modules/realtime/index.ts`.
+- Topicuri: `city:` `order:` `driver:` `vehicle:` `controlcenter:` — registry-ul de evenimente permise per topic e în `api/src/modules/realtime/index.ts`. Din taxi-010 (#24) `driver:` e nevid: primește `order.offered`/`order.accepted`/`order.rejected` (lifecycle-ul driver — emiterea efectivă vine cu taxi-028); subscribe pe `driver:*` rămâne imposibil până la WS multi-subiect (taxi-021).
 - Prezența/locația vehiculelor: in-memory, TTL 60s, alimentate prin `PATCH /dev/vehicles/*`.
 - Dispatch: nearest-vehicle (Haversine), sincron la `POST /orders`, fără acceptare de către șofer.
 - Regulă: orice tip de domeniu, status, event sau contract nou se adaugă în `packages/shared`, niciodată local în api/controlcenter.

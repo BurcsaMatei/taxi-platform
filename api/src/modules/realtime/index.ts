@@ -19,9 +19,13 @@ const ALLOWED_BY_PREFIX: Readonly<Record<TopicPrefix, ReadonlySet<RealtimeEnvelo
     "order.assigned",
     "order.dispatchFailed",
     "order.userCalledDispatch",
+    "order.accepted",
+    "order.driverArrived",
+    "order.tripStarted",
   ]),
 
-  "driver:": new Set<RealtimeEnvelope["name"]>([]),
+  // ✅ driver lifecycle: ofertă + accept/refuz (fără churn de re-dispatch pe order:)
+  "driver:": new Set<RealtimeEnvelope["name"]>(["order.offered", "order.accepted", "order.rejected"]),
 
   // ✅ per-vehicle stream (location + presence)
   "vehicle:": new Set<RealtimeEnvelope["name"]>(["vehicle.locationUpdated", "vehicle.presenceChanged"]),
@@ -33,6 +37,11 @@ const ALLOWED_BY_PREFIX: Readonly<Record<TopicPrefix, ReadonlySet<RealtimeEnvelo
     "order.assigned",
     "order.dispatchFailed",
     "order.userCalledDispatch",
+    "order.offered",
+    "order.accepted",
+    "order.rejected",
+    "order.driverArrived",
+    "order.tripStarted",
     "vehicle.locationUpdated",
     "vehicle.presenceChanged",
   ]),
