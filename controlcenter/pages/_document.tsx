@@ -48,10 +48,6 @@ const THEME_BOOTSTRAP_SCRIPT = `
 })();
 `;
 
-// === PWA gating (build-time)
-const IS_PROD = process.env.NODE_ENV === "production";
-const ENABLE_PWA = process.env.NEXT_PUBLIC_ENABLE_PWA === "1" && IS_PROD;
-
 // ==============================
 // Document
 // ==============================
@@ -91,9 +87,6 @@ export default class MyDocument extends Document<ExtraProps> {
         <Head>
           {/* Hints: suportăm light & dark */}
           <meta name="color-scheme" content="light dark" />
-
-          {/* Manifest PWA (basePath-aware) — randat DOAR dacă PWA este activ în producție */}
-          {ENABLE_PWA ? <link rel="manifest" href={withBase("/site.webmanifest")} /> : null}
 
           {/* Apple touch icon */}
           <link

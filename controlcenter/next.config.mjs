@@ -7,11 +7,7 @@ import { createVanillaExtractPlugin } from "@vanilla-extract/next-plugin";
 
 const withVanillaExtract = createVanillaExtractPlugin();
 
-// ==============================
-// PWA gating
-// ==============================
 const IS_PROD = process.env.NODE_ENV === "production";
-const ENABLE_PWA = process.env.NEXT_PUBLIC_ENABLE_PWA === "1" && IS_PROD;
 
 // ==============================
 // Next.js config
@@ -85,44 +81,7 @@ const nextConfig = {
 // ==============================
 // Apply plugins
 // ==============================
-let config = nextConfig;
-
-// Apply PWA first (if enabled) so vanilla-extract can wrap it
-if (ENABLE_PWA) {
-  try {
-    const pwaMod = await import("next-pwa");
-    const withPWAInit =
-      (pwaMod?.default && typeof pwaMod.default === "function" ? pwaMod.default : null) ??
-      (pwaMod?.withPWA && typeof pwaMod.withPWA === "function" ? pwaMod.withPWA : null);
-
-    if (withPWAInit) {
-      let runtimeCaching;
-      try {
-        const cacheMod = await import("next-pwa/cache");
-        runtimeCaching = cacheMod?.default ?? cacheMod;
-      } catch {
-        runtimeCaching = undefined;
-      }
-
-      const withPWA = withPWAInit({
-        dest: "public",
-        disable: false,
-        register: false,
-        skipWaiting: true,
-        ...(runtimeCaching ? { runtimeCaching } : {}),
-        fallbacks: { document: "/_offline" },
-        buildExcludes: [/\/_next\/dynamic-css-manifest\.json$/],
-      });
-
-      config = withPWA(config);
-    }
-  } catch (error) {
-    console.warn("Failed to load next-pwa, continuing without PWA:", error?.message ?? error);
-  }
-}
-
-// Apply vanilla-extract last so it wraps everything
-const finalConfig = withVanillaExtract(config);
+const finalConfig = withVanillaExtract(nextConfig);
 
 // ==============================
 // Export
