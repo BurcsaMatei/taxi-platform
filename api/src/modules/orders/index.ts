@@ -14,36 +14,23 @@ import {
   normalizeOrderStatus,
   topics,
 } from "@taxi/shared";
-import type { GeoPoint, OrderCallSource, OrderCallTarget, OrderStatus, ServiceTypeCode } from "@taxi/shared";
+import type {
+  CallOrderRequest,
+  CallOrderResponse,
+  CreateOrderRequest,
+  CreateOrderResponse,
+  GeoPoint,
+  OrderCallSource,
+  OrderCallTarget,
+  OrderStatus,
+  PatchOrderStatusRequest,
+  PatchOrderStatusResponse,
+  ServiceTypeCode,
+} from "@taxi/shared";
 
 import type { RealtimeHub } from "../realtime/wsServer.js";
 import { publishStrict } from "../realtime/index.js";
 import { chooseNearestVehicle } from "../dispatch/index.js";
-
-// ==============================
-// Types
-// ==============================
-type CreateOrderBody = {
-  cityId: string;
-  service: ServiceTypeCode;
-  pickup: GeoPoint;
-  dropoff: GeoPoint;
-};
-
-type PatchOrderStatusBody = {
-  cityId: string;
-  from: OrderStatus;
-  to: OrderStatus;
-  service?: ServiceTypeCode;
-};
-
-type CallOrderBody = {
-  cityId: string;
-  service: ServiceTypeCode;
-  target: OrderCallTarget; // "DISPATCH"
-  phoneNumber: string; // "0262942"
-  source?: OrderCallSource; // default "USER_APP"
-};
 
 // ==============================
 // Utils
@@ -106,7 +93,7 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
       return;
     }
 
-    const b = body as Partial<CreateOrderBody>;
+    const b = body as Partial<CreateOrderRequest>;
 
     if (typeof b.cityId !== "string" || b.cityId.trim().length === 0) {
       res.status(400).json({ ok: false, error: "cityId required" });
@@ -162,14 +149,15 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
       publishStrict(hub, topics.controlcenter(cityId), envFailed);
       publishStrict(hub, topics.order(orderId), envFailed);
 
-      res.status(201).json({
+      const payload: CreateOrderResponse = {
         ok: true,
         orderId,
-        status: "NEW" as const,
+        status: "NEW",
         assignedVehicleId: null,
-        dispatch: "FAILED" as const,
-        reason: "NO_AVAILABLE_VEHICLE" as const,
-      });
+        dispatch: "FAILED",
+        reason: "NO_AVAILABLE_VEHICLE",
+      };
+      res.status(201).json(payload);
       return;
     }
 
@@ -196,13 +184,14 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
     publishStrict(hub, topics.controlcenter(cityId), envStatus);
     publishStrict(hub, topics.order(orderId), envStatus);
 
-    res.status(201).json({
+    const payload: CreateOrderResponse = {
       ok: true,
       orderId,
-      status: "ASSIGNED" as const,
+      status: "ASSIGNED",
       assignedVehicleId,
-      dispatch: "OK" as const,
-    });
+      dispatch: "OK",
+    };
+    res.status(201).json(payload);
   });
 
   // ✅ call intent: user apasă “Sună dispecerat”
@@ -220,7 +209,7 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
       return;
     }
 
-    const b = body as Partial<CallOrderBody>;
+    const b = body as Partial<CallOrderRequest>;
 
     if (typeof b.cityId !== "string" || b.cityId.trim().length === 0) {
       res.status(400).json({ ok: false, error: "cityId required" });
@@ -260,7 +249,8 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
     publishStrict(hub, topics.controlcenter(cityId), env);
     publishStrict(hub, topics.order(orderId), env);
 
-    res.status(200).json({ ok: true });
+    const payload: CallOrderResponse = { ok: true };
+    res.status(200).json(payload);
   });
 
   app.patch("/orders/:id/status", (req, res) => {
@@ -276,7 +266,7 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
       return;
     }
 
-    const b = body as Partial<PatchOrderStatusBody>;
+    const b = body as Partial<PatchOrderStatusRequest>;
 
     if (typeof b.cityId !== "string" || b.cityId.trim().length === 0) {
       res.status(400).json({ ok: false, error: "cityId required" });
@@ -310,6 +300,7 @@ export function registerOrdersModule(app: Express, hub: RealtimeHub): void {
     publishStrict(hub, topics.controlcenter(cityId), env);
     publishStrict(hub, topics.order(orderId), env);
 
-    res.status(200).json({ ok: true, orderId, from, to });
+    const payload: PatchOrderStatusResponse = { ok: true, orderId, from, to };
+    res.status(200).json(payload);
   });
 }
