@@ -1,3 +1,4 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "buildCommand": "cd /vercel/path0 && npm -w packages/shared run build && npm -w controlcenter run build"
 }
