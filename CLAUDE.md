@@ -21,13 +21,13 @@ Monorepo npm cu suprafețele:
 - Fleet directory: doar `baia-mare` are vehicule (250, sintetice); celelalte orașe au 0 → dispatch eșuează acolo.
 - Typecheck trece curat pe toate workspace-urile. Nu există niciun test în repo.
 
-### Known issues (repară-le DOAR când ți se cere explicit, nu en passant)
+### Known issues (fiecare are issue GitHub dedicat — repară-le DOAR prin issue-ul lor, nu en passant)
 
-1. `controlcenter/pages/ops/[cityId]/orders.tsx` e copy-paste din `map.tsx` și randează harta; `components/ops/orders/OpsOrdersPage.tsx` (pagina reală de comenzi) e nemontată.
-2. **`api/.env.local` e comis în git — secretul HMAC și toate PIN-urile sunt COMPROMISE. De rotit înainte de orice deploy.**
-3. CI-ul din `controlcenter/.github/workflows/ci.yml` nu rulează niciodată (GitHub citește doar `.github/` de la root).
-4. `controlcenter/pages/api/fleet/[cityId].ts` citește `API_BASE_URL`; restul proxy-urilor citesc `TAXI_API_BASE_URL`.
-5. Duplicate de tipuri (a NU se extinde, a se muta în `@taxi/shared` când se cere): `CityPublic` (api vs. controlcenter, dezaliniat — varianta din controlcenter nu are `mapCenter`/`mapZoom`), `ControlcenterTokenPayload` (api vs. controlcenter), `packages/shared/src/contracts/orders.ts` (fictiv — API-ul real folosește alte nume de câmpuri: `service` nu `serviceType`).
+1. `controlcenter/pages/ops/[cityId]/orders.tsx` e copy-paste din `map.tsx` și randează harta; `components/ops/orders/OpsOrdersPage.tsx` (pagina reală de comenzi) e nemontată. → taxi-017 (#31)
+2. **`api/.env.local` e comis în git — secretul HMAC și toate PIN-urile sunt COMPROMISE. De rotit înainte de orice deploy.** → taxi-001 (#15)
+3. CI-ul din `controlcenter/.github/workflows/ci.yml` nu rulează niciodată (GitHub citește doar `.github/` de la root). → taxi-002 (#16)
+4. `controlcenter/pages/api/fleet/[cityId].ts` citește `API_BASE_URL`; restul proxy-urilor citesc `TAXI_API_BASE_URL`. → taxi-005 (#19)
+5. Duplicate de tipuri (a NU se extinde): `CityPublic` (api vs. controlcenter, dezaliniat — varianta din controlcenter nu are `mapCenter`/`mapZoom`), `ControlcenterTokenPayload` (api vs. controlcenter) → taxi-009 (#23); `packages/shared/src/contracts/orders.ts` (fictiv — API-ul real folosește alte nume de câmpuri: `service` nu `serviceType`) → taxi-008 (#22).
 
 ### Deprecated (nu construi peste ele)
 
@@ -100,10 +100,16 @@ npm -w packages/shared run build                # required before api build (dis
 
 Ordinea de dezvoltare (decisă, fixă): **controlcenter → landing → user → driver → payments**.
 
-**Milestone curent:** repararea paginii `/ops/[cityId]/orders` (montarea `OpsOrdersPage`) + persistență minimă Supabase în `api` (orders în DB, snapshot la subscribe).
+Planul complet trăiește în **`ROADMAP.md`** (root): 7 faze + post-MVP, drum critic, matrice de dependențe, milestone-uri M1–M4. Backlog-ul integral: **43 issues GitHub deschise (#15–#57)**, mapare `#nr = taxi-XXX + 14`, documentată în ROADMAP.md. Workflow-ul de execuție per issue (Prompt 1 analiză → aprobare → Prompt 2 execuție → PR → merge → update CLAUDE.md + ROADMAP.md): `docs/konceptid-taxi.md`.
+
+**Milestone curent: M1 — Repo sigur + CI verde.** Puncte de intrare: taxi-001 (#15, rotire secrete) și taxi-002 (#16, CI la root).
+
+În sesiunea de setup (2026-07-02) nu s-a modificat niciun cod — doar documentație (CLAUDE.md, docs/konceptid-taxi.md, ROADMAP.md) și deschiderea celor 43 de issues.
 
 ## Referințe
 
+- `ROADMAP.md` — secvență, dependențe, milestone-uri (sursa de adevăr pentru ordinea de execuție)
+- `docs/konceptid-taxi.md` — instrucțiuni KonceptID: workflow issues, format, convenții de colaborare
 - `./briefing.sh` — snapshot de sesiune (git, env, scripts); generează `BRIEFING.md` (gitignored)
 - `packages/tokens/src/theme.css.ts` — design tokens
 - `api/src/modules/realtime/index.ts` — registry evenimente ↔ topicuri (de actualizat la orice event nou)
