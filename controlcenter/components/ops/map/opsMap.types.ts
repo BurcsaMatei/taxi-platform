@@ -3,7 +3,7 @@
 // ==============================
 // Imports
 // ==============================
-import type { OrderStatus } from "@taxi/shared";
+import type { CityPublic, OrderStatus } from "@taxi/shared";
 import type { Feature, FeatureCollection, Point } from "geojson";
 import type { IControl, Map as MapboxMap } from "mapbox-gl";
 
@@ -25,19 +25,6 @@ export type FleetResponse = {
   cityId: string;
   total: number;
   vehicles: ReadonlyArray<FleetVehicle>;
-};
-
-export type CityPublic = {
-  id: string;
-  name: string;
-  slug: string;
-  timezone: string;
-  isActive: boolean;
-  dispatchPhone?: string;
-
-  // ✅ Map initial view (single source of truth per city)
-  mapCenter: { lng: number; lat: number };
-  mapZoom: number;
 };
 
 export type CityResponseOk = {

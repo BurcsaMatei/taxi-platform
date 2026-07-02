@@ -60,7 +60,7 @@ Scop: contractele din `@taxi/shared` devin reale și complete înainte de a cons
 | Ordine | Issue | # | P | Suprafață | Depinde de |
 |---|---|---|---|---|---|
 | 1 | ✅ 2026-07-03 — taxi-008 Aliniere contracts/orders.ts cu API-ul real | #22 | P1 | shared/api | — |
-| 1 | taxi-009 Mutare TokenPayload + CityPublic în shared | #23 | P1 | shared/api/controlcenter | — |
+| 1 | ✅ 2026-07-03 — taxi-009 Mutare TokenPayload + CityPublic în shared | #23 | P1 | shared/api/controlcenter | — |
 | 2 | taxi-010 Evenimente lifecycle driver + registry | #24 | P1 | shared/api | taxi-008 |
 
 Paralel: 008 ∥ 009; faza întreagă poate rula în paralel cu Faza 0.

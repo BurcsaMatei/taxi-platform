@@ -1,19 +1,13 @@
 // controlcenter/lib/auth/controlcenterAuth.ts
 
 // ==============================
+// Imports
+// ==============================
+import type { ControlcenterScope, ControlcenterTokenPayload } from "@taxi/shared";
+
+// ==============================
 // Types
 // ==============================
-export type ControlcenterScope = "hq" | "city";
-
-export type ControlcenterTokenPayload = {
-  v: 1;
-  sub: "controlcenter";
-  scope: ControlcenterScope;
-  cityId?: string;
-  iat: number;
-  exp: number;
-};
-
 export type ControlcenterLoginOk = {
   ok: true;
   token: string;

@@ -7,10 +7,9 @@ import type { IncomingMessage } from "node:http";
 import type { Socket } from "node:net";
 import type { Duplex } from "node:stream";
 import { WebSocket, WebSocketServer } from "ws";
-import type { RealtimeEnvelope, RealtimeTopic } from "@taxi/shared";
+import type { ControlcenterTokenPayload, RealtimeEnvelope, RealtimeTopic } from "@taxi/shared";
 import { isRealtimeTopic } from "@taxi/shared";
 
-import type { ControlcenterTokenPayload } from "../auth/controlcenterToken.js";
 import { verifyControlcenterToken } from "../auth/controlcenterToken.js";
 
 // ==============================

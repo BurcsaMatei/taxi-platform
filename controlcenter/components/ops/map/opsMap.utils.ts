@@ -3,12 +3,11 @@
 // ==============================
 // Imports
 // ==============================
-import type { RealtimeEnvelope } from "@taxi/shared";
+import type { CityPublic, RealtimeEnvelope } from "@taxi/shared";
 import { themeClassDark, themeClassLight } from "@taxi/tokens";
 import * as React from "react";
 
 import type {
-  CityPublic,
   FleetResponse,
   OrderAssigned,
   OrderStatusSnap,
