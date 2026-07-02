@@ -25,7 +25,7 @@ Monorepo npm cu suprafețele:
 
 1. `controlcenter/pages/ops/[cityId]/orders.tsx` e copy-paste din `map.tsx` și randează harta; `components/ops/orders/OpsOrdersPage.tsx` (pagina reală de comenzi) e nemontată. → taxi-017 (#31)
 2. ~~`api/.env.local` e comis în git — secretul HMAC și toate PIN-urile sunt COMPROMISE.~~ **Rezolvat (taxi-001, #15, 2026-07-02):** fișierul e scos din tracking (`**/.env.local` în `.gitignore` root), secretele au fost rotite — valorile vechi din istoric sunt moarte. Istoricul NU a fost rescris (repo privat, out of scope).
-3. CI-ul din `controlcenter/.github/workflows/ci.yml` nu rulează niciodată (GitHub citește doar `.github/` de la root). → taxi-002 (#16)
+3. ~~CI-ul din `controlcenter/.github/workflows/ci.yml` nu rulează niciodată.~~ **Rezolvat (taxi-002, #16, 2026-07-02):** workflow real la root (`.github/workflows/ci.yml` — shared build → typecheck → lint → api build → controlcenter build, pe push main + toate PR-urile); workflow-ul mort din `controlcenter/.github/` eliminat.
 4. `controlcenter/pages/api/fleet/[cityId].ts` citește `API_BASE_URL`; restul proxy-urilor citesc `TAXI_API_BASE_URL`. → taxi-005 (#19)
 5. Duplicate de tipuri (a NU se extinde): `CityPublic` (api vs. controlcenter, dezaliniat — varianta din controlcenter nu are `mapCenter`/`mapZoom`), `ControlcenterTokenPayload` (api vs. controlcenter) → taxi-009 (#23); `packages/shared/src/contracts/orders.ts` (fictiv — API-ul real folosește alte nume de câmpuri: `service` nu `serviceType`) → taxi-008 (#22).
 
