@@ -43,7 +43,7 @@ Scop: repo sigur, CI real, tooling care rulează pe WSL.
 |---|---|---|---|---|---|
 | 1 | ✅ 2026-07-02 — taxi-001 Rotire secrete + eliminare .env.local din git | #15 | P1 | infra/api | — |
 | 1 | ✅ 2026-07-02 — taxi-002 CI funcțional la root | #16 | P1 | infra | — |
-| 2 | taxi-003 .env.example reale | #17 | P2 | infra | taxi-001 |
+| 2 | ✅ 2026-07-02 — taxi-003 .env.example reale | #17 | P2 | infra | taxi-001 |
 | 2 | taxi-004 Simulatoare flotă bash/node | #18 | P2 | infra | — |
 | 2 | taxi-005 Fix proxy fleet env var | #19 | P2 | controlcenter | — |
 | 3 | taxi-044 Setup Vercel + domeniu + subdomenii | #58 | P1 | infra | taxi-001, taxi-002, taxi-003 |

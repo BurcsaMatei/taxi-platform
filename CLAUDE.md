@@ -62,8 +62,7 @@ npm -w packages/shared run build                # required before api build (dis
 
 - Node 20.x (`controlcenter/.nvmrc`), npm workspaces (no pnpm/turbo).
 - `scripts/*.ps1` (tree, fleet simulators) are **PowerShell-only** — they do not run on WSL without `pwsh`.
-- Required env — api: `TAXI_AUTH_TOKEN_SECRET`, `TAXI_CONTROL_CENTER_HQ_PIN`, `TAXI_CONTROL_CENTER_HQ_CITY_ID`, `TAXI_CONTROL_CENTER_CITY_PINS_JSON`, optional `TAXI_AUTH_TOKEN_TTL_SEC`. Controlcenter: `NEXT_PUBLIC_MAPBOX_TOKEN`, `TAXI_API_BASE_URL`, `NEXT_PUBLIC_TAXI_WS_URL`.
-- `controlcenter/.env.example` is stale (documents SEO/PWA keys, not the ones above).
+- Env: vezi `api/.env.example` și `controlcenter/.env.example` — reale, fiecare cheie documentată e citită efectiv de cod (taxi-003). API-ul nu încarcă singur `.env.local` — pornește-l cu `node --env-file=api/.env.local api/dist/index.js`.
 
 ## Code conventions (KonceptID)
 
