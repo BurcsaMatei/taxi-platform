@@ -5,7 +5,7 @@ import type { ServiceTypeCode } from "./service";
 export interface Order {
   id: string;
   cityId: string;
-  serviceType: ServiceTypeCode;
+  service: ServiceTypeCode;
 
   userId: string;
 
